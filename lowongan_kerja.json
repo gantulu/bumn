@@ -1,0 +1,66 @@
+
+{
+  "lowongan_kerja": [
+    {
+      "id": "LKG-0001",
+      "judul": "Staff Administrasi",
+      "perusahaan": {
+        "nama": "PT Bank Mandiri (Persero) Tbk",
+        "kategori": "BUMN",
+        "industri": "Perbankan",
+        "logo": "https://example.com/mandiri.png",
+        "website": "https://www.bankmandiri.co.id"
+      },
+      "posisi": "Staff Administrasi",
+      "deskripsi": "Bertanggung jawab mengelola administrasi dan dokumentasi perusahaan.",
+      "kualifikasi": [
+        "Pendidikan minimal D3/S1",
+        "Usia maksimal 27 tahun",
+        "Menguasai Microsoft Office",
+        "Mampu bekerja secara individu dan tim"
+      ],
+      "pendidikan": [
+        "D3",
+        "S1"
+      ],
+      "jurusan": [
+        "Administrasi",
+        "Manajemen",
+        "Akuntansi"
+      ],
+      "pengalaman": "Fresh Graduate",
+      "lokasi": {
+        "provinsi": "DKI Jakarta",
+        "kota": "Jakarta Selatan",
+        "alamat": "Jakarta"
+      },
+      "jenis_pekerjaan": "Full Time",
+      "sistem_kerja": "WFO",
+      "gaji": {
+        "minimum": 5000000,
+        "maksimum": 7000000,
+        "mata_uang": "IDR"
+      },
+      "tanggal": {
+        "dibuka": "2026-11-01",
+        "ditutup": "2026-11-30"
+      },
+      "cara_melamar": {
+        "metode": "Online",
+        "url": "https://example.com/karir"
+      },
+      "sumber": {
+        "nama": "Website Resmi Perusahaan",
+        "url": "https://example.com"
+      },
+      "status": "open",
+      "verified": false,
+      "created_at": "2026-11-14T07:00:00+08:00"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "total": 1,
+    "last_updated": "2026-11-14"
+  }
+}
