@@ -61,14 +61,14 @@ function getStoredCredentials(): StoredBumnCredentials {
 }
 
 export function normalizeBumnPhone(value: string): string {
-  const digits = value.replace(/\\D/g, "");
+  const digits = value.replace(/\D/g, "");
   if (digits.startsWith("0")) return `62${digits.slice(1)}`;
   if (digits.startsWith("8")) return `62${digits}`;
   return digits;
 }
 
 export function isValidBumnPhone(value: string): boolean {
-  return /^62\\d{8,13}$/.test(normalizeBumnPhone(value));
+  return /^62\d{8,13}$/.test(normalizeBumnPhone(value));
 }
 
 export async function checkPhone(phone: string): Promise<boolean> {
