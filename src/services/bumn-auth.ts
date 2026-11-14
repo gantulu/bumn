@@ -7,6 +7,11 @@ export type BumnAuthUser = {
   is_active: boolean;
 };
 
+export type BumnEducation = { level?: string | null; institution?: string | null; major?: string | null; degree?: string | null; start_year?: number | null; graduation_year?: number | null; gpa?: number | null; description?: string | null };
+export type BumnExperience = { type?: string | null; company?: string | null; position?: string | null; employment_type?: string | null; location?: string | null; start_date?: string | null; end_date?: string | null; is_current?: boolean; description?: string | null; responsibilities?: string[] };
+export type BumnCertification = { name?: string | null; issuer?: string | null; issue_date?: string | null; expiry_date?: string | null; credential_id?: string | null; credential_url?: string | null; description?: string | null };
+export type BumnLanguage = { language?: string | null; proficiency?: string | null };
+
 export type BumnProfile = BumnAuthUser & {
   birth_place: string | null;
   birth_date: string | null;
@@ -15,13 +20,26 @@ export type BumnProfile = BumnAuthUser & {
   city: string | null;
   province: string | null;
   postal_code: string | null;
+  cv_headline: string | null;
+  cv_summary: string | null;
+  cv_skills: string[];
+  cv_education: BumnEducation[];
+  cv_experiences: BumnExperience[];
+  cv_certifications: BumnCertification[];
+  cv_languages: BumnLanguage[];
+  cv_portfolio_url: string | null;
+  cv_linkedin_url: string | null;
+  cv_website_url: string | null;
+  cv_updated_at: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type BumnProfileInput = Pick<
   BumnProfile,
-  "full_name" | "email" | "birth_place" | "birth_date" | "gender" | "address" | "city" | "province" | "postal_code"
+  "full_name" | "email" | "birth_place" | "birth_date" | "gender" | "address" | "city" | "province" | "postal_code" |
+  "cv_headline" | "cv_summary" | "cv_skills" | "cv_education" | "cv_experiences" |
+  "cv_certifications" | "cv_languages" | "cv_portfolio_url" | "cv_linkedin_url" | "cv_website_url"
 >;
 
 type AuthResponse = {
