@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav } from "./components/layout/BottomNav";
 import { Header } from "./components/layout/Header";
-import { categories, jobs } from "./data/jobs";
+import { jobs } from "./data/jobs";
 import { ApplicationPage } from "./pages/ApplicationPage";
 import { HomePage } from "./pages/HomePage";
 import { JobDetailPage } from "./pages/JobDetailPage";
