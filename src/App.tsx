@@ -880,21 +880,45 @@ function AppContent() {
         .auth-card {
           margin: 18px;
           padding: 22px;
-          border: 1px solid #edf0f4;
-          border-radius: 14px;
+          border: 1px solid #e6ebf2;
+          border-radius: 16px;
           background: white;
+          box-shadow: 0 8px 24px #172b4508;
         }
-        .auth-card h2 { margin: 0 0 8px; font-size: 20px; color: #253247; }
-        .auth-card > p { margin: 0 0 20px; color: #8290a0; font-size: 12px; line-height: 1.6; }
-        .auth-form { display: flex; flex-direction: column; gap: 13px; }
-        .auth-form label { display: flex; flex-direction: column; gap: 7px; color: #39485c; font-size: 12px; font-weight: 650; }
+        .auth-card h2 { margin: 0 0 8px; font-size: 21px; line-height: 1.3; color: #253247; letter-spacing: -.02em; }
+        .auth-card > p { margin: 0 0 22px; color: #718096; font-size: 13px; line-height: 1.65; }
+        .auth-form { display: flex; flex-direction: column; gap: 16px; }
+        .auth-form label { display: flex; flex-direction: column; gap: 8px; color: #39485c; font-size: 12px; font-weight: 700; }
         .auth-form input {
-          width: 100%; height: 45px; padding: 0 12px; border: 1px solid #dce3ec;
-          border-radius: 9px; outline: none; background: #fff; color: #253247; font-size: 13px;
+          width: 100%; min-width: 0; height: 48px; padding: 0 13px; border: 1px solid #d7e0eb;
+          border-radius: 10px; outline: none; background: #fff; color: #253247; font-size: 14px;
+          transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
         }
+        .auth-form input::placeholder { color: #a0aaba; }
         .auth-form input:focus { border-color: #174a80; box-shadow: 0 0 0 3px #174a8018; }
-        .auth-error { padding: 10px 12px; border-radius: 8px; background: #fff0f0; color: #b42318; font-size: 12px; }
-        .auth-link { border: 0; background: none; color: #174a80; font-size: 12px; font-weight: 700; padding: 12px 0 0; }
+        .auth-form input:disabled { background: #f4f6f9; color: #718096; cursor: not-allowed; }
+        .auth-form input[aria-invalid="true"] { border-color: #d92d20; }
+        .auth-field { display: flex; flex-direction: column; gap: 8px; }
+        .auth-field > label { display: flex; flex-direction: column; gap: 8px; color: #39485c; font-size: 12px; font-weight: 700; }
+        .auth-input-wrap { position: relative; display: flex; align-items: center; }
+        .auth-input-wrap input { padding-right: 48px; }
+        .auth-field-error { margin: 0; color: #b42318; font-size: 11px; line-height: 1.4; }
+        .auth-password-toggle {
+          position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+          width: 38px; height: 38px; display: grid; place-items: center;
+          border: 0; border-radius: 8px; background: transparent; color: #718096;
+        }
+        .auth-password-toggle:hover { background: #f1f5f9; color: #174a80; }
+        .auth-password-toggle:focus-visible, .auth-link:focus-visible, .auth-form button:focus-visible {
+          outline: 3px solid #174a8040; outline-offset: 2px;
+        }
+        .auth-field-hint, .auth-phone-normalized { margin: -8px 0 0; color: #718096; font-size: 11px; line-height: 1.5; }
+        .auth-phone-normalized { color: #17633b; }
+        .auth-form .apply-button { min-height: 48px; margin-top: 2px; font-size: 13px; }
+        .auth-form .apply-button:disabled { opacity: .65; cursor: wait; }
+        .auth-error { padding: 11px 12px; border: 1px solid #fecdca; border-radius: 9px; background: #fff5f4; color: #b42318; font-size: 12px; line-height: 1.5; }
+        .auth-link { border: 0; background: none; color: #174a80; font-size: 12px; font-weight: 700; padding: 14px 0 0; cursor: pointer; }
+        .auth-link:disabled { opacity: .5; cursor: not-allowed; }
         .auth-secondary { width: 100%; border: 1px solid #dce3ec; background: white; color: #174a80; border-radius: 10px; padding: 12px; font-weight: 700; margin-top: 10px; }
         @media (min-width: 501px) {
           .app-container {
