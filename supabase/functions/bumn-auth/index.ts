@@ -60,7 +60,7 @@ function publicProfile(user: Record<string, unknown>) {
 }
 
 function isValidEmail(value: string): boolean {
-  return value.length <= 254 && /^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(value);
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 function getOwnedAvatarPath(avatarUrl: unknown, userId: string, supabaseUrl: string): string | null {
