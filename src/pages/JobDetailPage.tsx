@@ -104,7 +104,7 @@ export function JobDetailPage({ jobs, savedIds, onToggleSaved, onApply }: JobDet
           <div className="detail-fact"><span>Batas pendaftaran</span><strong>{formatDate(job.closingAt)}</strong></div>
           <div className="detail-fact"><span>Status</span><strong>{isExpired ? "Kedaluwarsa" : "Belum melewati tanggal penutupan"}</strong></div>
         </div>
-        <p>{job.applicationUrl ? "Tautan pendaftaran tersedia pada sumber lowongan." : "Tautan pendaftaran resmi belum tersedia pada data aplikasi."}</p>
+        {job.applicationUrl ? <p><a href={job.applicationUrl} target="_blank" rel="noreferrer">Buka halaman pendaftaran</a></p> : <p>Tautan pendaftaran resmi belum tersedia pada data aplikasi.</p>}
         {job.sourceUrl && <p><a href={job.sourceUrl} target="_blank" rel="noreferrer">Lihat sumber lowongan</a></p>}
       </section>
       <section className="detail-section"><h3>Sumber dan Verifikasi</h3><div className="source-note">{verificationMessage}</div></section>
