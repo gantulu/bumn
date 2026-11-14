@@ -27,7 +27,6 @@ export default function PhoneStep({
             autoComplete="tel"
             inputMode="tel"
             required
-            minLength={9}
             maxLength={20}
             placeholder="08xxxxxxxxxx"
           />
