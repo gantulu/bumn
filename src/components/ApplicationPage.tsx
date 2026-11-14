@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState,type FormEvent} from "react";
-import {ArrowLeft,CheckCircle2,FileText,LoaderCircle,UploadCloud} from "lucide-react";
+import {ArrowLeft,CheckCircle2,FileText,LoaderCircle} from "lucide-react";
 import type {BumnAuthUser} from "../services/bumn-auth";
 import {createApplication,getApplicationDocumentUrl,listApplications,submitApplication,updateApplication,uploadApplicationDocument,type Application,type ApplicationStatus} from "../services/bumn-lamar";
 import "./ApplicationPage.css";
