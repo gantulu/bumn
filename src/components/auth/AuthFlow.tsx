@@ -99,7 +99,6 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     setError("");
     try {
       const user = await loginBumnUser({ phone: normalizeBumnPhone(phone), password });
-      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       onAuthenticated(user);
     } catch (err) {
