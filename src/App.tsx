@@ -394,7 +394,7 @@ function AppContent() {
 
       return matchesSearch && matchesCategory && matchesSaved;
     });
-  }, [search, category, activeTab, saved]);
+  }, [jobs, search, category, activeTab, saved]);
 
   const toggleSaved = (id: string) => {
     const nextSaved = saved.includes(id)
