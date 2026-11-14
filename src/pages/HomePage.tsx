@@ -1,4 +1,4 @@
-import { Building2, Calculator, Monitor, Settings, Users, BriefcaseBusiness } from "lucide-react";
+import { Building2, Calculator, Monitor, Search, Settings, Users, BriefcaseBusiness } from "lucide-react";
 import { companies, categories } from "../data/jobs";
 import type { Job } from "../types/job";
 import { JobCard } from "../components/jobs/JobCard";
@@ -8,6 +8,7 @@ const categoryIcons = [BriefcaseBusiness, Monitor, Calculator, Settings, Users, 
 interface HomePageProps {
   jobs: Job[];
   savedIds: string[];
+  searchQuery: string;
   onSearchChange: (value: string) => void;
   onSearchSubmit: () => void;
   onSelectCategory: (category: string) => void;
@@ -15,15 +16,16 @@ interface HomePageProps {
   onOpenJob: (job: Job) => void;
 }
 
-export function HomePage({ jobs, savedIds, onSearchChange, onSearchSubmit, onSelectCategory, onToggleSaved, onOpenJob }: HomePageProps) {
+export function HomePage({ jobs, savedIds, searchQuery, onSearchChange, onSearchSubmit, onSelectCategory, onToggleSaved, onOpenJob }: HomePageProps) {
   return (
     <>
       <section className="hero">
         <h1>Temukan Karier Impianmu!</h1>
         <p>Jelajahi peluang karier di perusahaan BUMN Indonesia dan wujudkan masa depanmu.</p>
         <label className="search-box">
+          <Search size={19} aria-hidden="true" />
           <span className="sr-only">Cari lowongan berdasarkan posisi, perusahaan, atau lokasi</span>
-          <input onChange={(event) => onSearchChange(event.target.value)}
+          <input value={searchQuery} onChange={(event) => onSearchChange(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter") onSearchSubmit(); }}
             placeholder="Cari posisi atau perusahaan..." />
         </label>
