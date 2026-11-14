@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from "react";
+import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Search,
@@ -152,12 +153,36 @@ const companies = [
 
 type Tab = "home" | "search" | "saved" | "profile";
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState<Tab>("home");
+function AppContent() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab: Tab = location.pathname.startsWith("/lowongan")
+    ? "search"
+    : location.pathname === "/tersimpan"
+      ? "saved"
+      : location.pathname === "/profil"
+        ? "profile"
+        : "home";
+  const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
+  const setActiveTab = (tab: Tab) => {
+    const paths: Record<Tab, string> = {
+      home: "/",
+      search: "/lowongan",
+      saved: "/tersimpan",
+      profile: "/profil",
+    };
+    navigate(paths[tab]);
+  };
+  const setSelectedJob = (job: Job | null) => {
+    if (job) {
+      navigate(`/lowongan/${job.id}`, { state: { from: location.pathname } });
+      return;
+    }
+    navigate((location.state as { from?: string } | null)?.from ?? "/lowongan");
+  };
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
   const [saved, setSaved] = useState<string[]>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) => {
@@ -191,7 +216,6 @@ export default function App() {
 
   const openSearch = () => {
     setActiveTab("search");
-    setSelectedJob(null);
   };
 
   const renderJob = (job: Job) => (
@@ -932,10 +956,7 @@ export default function App() {
               className={`nav-item ${
                 activeTab === item.id ? "active" : ""
               }`}
-              onClick={() => {
-                setActiveTab(item.id);
-                setSelectedJob(null);
-              }}
+              onClick={() => setActiveTab(item.id)}
             >
               <Icon size={21} />
               {item.label}
@@ -1024,5 +1045,15 @@ export default function App() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/*" element={<AppContent />} />
+      </Routes>
+    </HashRouter>
   );
 }
