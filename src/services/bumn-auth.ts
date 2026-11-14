@@ -82,7 +82,11 @@ export type StoredBumnCredentials = {
 export const BUMN_AUTH_STORAGE_KEY = "bumn_auth_credentials";
 
 export function saveBumnCredentials(credentials: StoredBumnCredentials): void {
-  localStorage.setItem(BUMN_AUTH_STORAGE_KEY, JSON.stringify(credentials));
+  try {
+    localStorage.setItem(BUMN_AUTH_STORAGE_KEY, JSON.stringify(credentials));
+  } catch {
+    // Authentication can still complete for the current page session.
+  }
 }
 
 export function readBumnCredentials(): StoredBumnCredentials | null {
@@ -107,5 +111,9 @@ export function readBumnCredentials(): StoredBumnCredentials | null {
 }
 
 export function clearBumnCredentials(): void {
-  localStorage.removeItem(BUMN_AUTH_STORAGE_KEY);
+  try {
+    localStorage.removeItem(BUMN_AUTH_STORAGE_KEY);
+  } catch {
+    // Ignore storage access errors during logout.
+  }
 }
