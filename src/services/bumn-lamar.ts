@@ -58,6 +58,7 @@ export type Application = {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  cv_snapshot: { version: number; captured_at: string; updated_at?: string; identity: Record<string, unknown>; cv: { headline?: string | null; summary?: string | null; skills?: string[]; education?: Record<string, unknown>[]; experiences?: Record<string, unknown>[]; certifications?: Record<string, unknown>[]; languages?: Record<string, unknown>[]; portfolio_url?: string | null; linkedin_url?: string | null; website_url?: string | null } } | null;
 };
 
 type Response<T> = {
