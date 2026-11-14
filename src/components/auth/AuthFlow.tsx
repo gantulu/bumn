@@ -4,6 +4,7 @@ import {
   loginBumnUser,
   registerBumnUser,
   type BumnAuthUser,
+  saveBumnCredentials,
 } from "../../services/bumn-auth";
 import PhoneStep from "./PhoneStep";
 import RegisterStep from "./RegisterStep";
@@ -54,6 +55,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
         email: email.trim(),
         password,
       });
+      saveBumnCredentials({ phone: phone.trim(), password });
       setPassword("");
       setConfirmPassword("");
       onAuthenticated(user);
@@ -70,6 +72,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     setError("");
     try {
       const user = await loginBumnUser({ phone: phone.trim(), password });
+      saveBumnCredentials({ phone: phone.trim(), password });
       setPassword("");
       onAuthenticated(user);
     } catch (err) {
@@ -126,7 +129,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
         />
       )}
       <p style={{ marginTop: 16, marginBottom: 0, fontSize: 10 }}>
-        Login berlaku untuk sesi halaman ini. Setelah halaman dimuat ulang, pengguna perlu login kembali.
+        Login otomatis aktif pada perangkat ini selama data login tersimpan di browser.
       </p>
     </section>
   );
