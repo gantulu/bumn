@@ -24,6 +24,11 @@ body,
   padding: 0;
 }
 
+html,
+body {
+  touch-action: pan-x pan-y;
+}
+
 body {
   min-width: 320px;
   overflow: hidden;
