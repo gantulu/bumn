@@ -1,6 +1,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import AuthFlow from "./components/auth/AuthFlow";
+import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
 import {
   Home,
   Search,
@@ -21,8 +23,6 @@ import {
   SlidersHorizontal,
   X,
   CheckCircle2,
-  LogIn,
-  UserPlus,
   LogOut,
   Share2,
 } from "lucide-react";
@@ -162,17 +162,8 @@ function getCategoryIcon(category: string) {
 
 type Tab = "home" | "search" | "saved" | "profile";
 
-type StoredUser = {
-  name: string;
-  email: string;
-  passwordSalt: string;
-  passwordHash: string;
-};
+type AuthUser = BumnAuthUser;
 
-type AuthUser = Pick<StoredUser, "name" | "email">;
-
-const USERS_STORAGE_KEY = "bumn_users";
-const SESSION_STORAGE_KEY = "bumn_session";
 const SAVED_JOBS_STORAGE_KEY = "bumn_saved_jobs";
 
 function readSavedJobs(): string[] {
@@ -182,40 +173,6 @@ function readSavedJobs(): string[] {
   } catch {
     return [];
   }
-}
-
-function readStoredUsers(): StoredUser[] {
-  try {
-    const value = localStorage.getItem(USERS_STORAGE_KEY);
-    const parsed: unknown = value ? JSON.parse(value) : [];
-    return Array.isArray(parsed) ? parsed as StoredUser[] : [];
-  } catch {
-    return [];
-  }
-}
-
-function readSessionUser(): AuthUser | null {
-  try {
-    const email = localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!email) return null;
-    const user = readStoredUsers().find((item) => item.email === email);
-    return user ? { name: user.name, email: user.email } : null;
-  } catch {
-    return null;
-  }
-}
-
-async function hashPassword(password: string, salt: string): Promise<string> {
-  const bytes = new TextEncoder().encode(`${salt}:${password}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function createPasswordSalt(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  return Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function AppContent() {
@@ -276,7 +233,7 @@ function AppContent() {
     ? "search"
     : location.pathname === "/tersimpan"
       ? "saved"
-      : location.pathname === "/profil" || isLoginPage || isRegisterPage
+      : location.pathname === "/profil" || location.pathname === "/profile" || isLoginPage || isRegisterPage
         ? "profile"
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
@@ -316,72 +273,38 @@ function AppContent() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
   const [saved, setSaved] = useState<string[]>(() => readSavedJobs());
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => readSessionUser());
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isRestoringAuth, setIsRestoringAuth] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const credentials = readBumnCredentials();
+    if (!credentials) {
+      setIsRestoringAuth(false);
+      return;
+    }
+
+    void loginBumnUser(credentials)
+      .then((user) => {
+        if (active) setCurrentUser(user);
+      })
+      .catch(() => {
+        // Keep credentials on temporary network/API failures; user can retry login.
+      })
+      .finally(() => {
+        if (active) setIsRestoringAuth(false);
+      });
+
+    return () => { active = false; };
+  }, []);
   const [applicationName, setApplicationName] = useState("");
   const [applicationEmail, setApplicationEmail] = useState("");
   const [applicationPhone, setApplicationPhone] = useState("");
   const [applicationEducation, setApplicationEducation] = useState("");
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
-  const [authName, setAuthName] = useState("");
-  const [authEmail, setAuthEmail] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-
-  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAuthError("");
-
-    const name = authName.trim();
-    const email = authEmail.trim().toLowerCase();
-    if (!name || !email || authPassword.length < 8) {
-      setAuthError("Lengkapi semua data. Password minimal 8 karakter.");
-      return;
-    }
-
-    try {
-      const users = readStoredUsers();
-      if (users.some((user) => user.email === email)) {
-        setAuthError("Email sudah terdaftar. Silakan login.");
-        return;
-      }
-      const passwordSalt = createPasswordSalt();
-      const passwordHash = await hashPassword(authPassword, passwordSalt);
-      const newUser: StoredUser = { name, email, passwordSalt, passwordHash };
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([...users, newUser]));
-      localStorage.setItem(SESSION_STORAGE_KEY, email);
-      setCurrentUser({ name, email });
-      setAuthPassword("");
-      navigate("/profil", { replace: true });
-    } catch {
-      setAuthError("Pendaftaran gagal. Pastikan browser mengizinkan penyimpanan lokal.");
-    }
-  };
-
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setAuthError("");
-
-    const email = authEmail.trim().toLowerCase();
-    try {
-      const user = readStoredUsers().find((item) => item.email === email);
-      if (!user || await hashPassword(authPassword, user.passwordSalt) !== user.passwordHash) {
-        setAuthError("Email atau password tidak sesuai.");
-        return;
-      }
-      localStorage.setItem(SESSION_STORAGE_KEY, user.email);
-      setCurrentUser({ name: user.name, email: user.email });
-      setAuthPassword("");
-      navigate("/profil", { replace: true });
-    } catch {
-      setAuthError("Login gagal. Periksa dukungan penyimpanan browser.");
-    }
-  };
-
   const handleLogout = () => {
-    localStorage.removeItem(SESSION_STORAGE_KEY);
+    clearBumnCredentials();
     setCurrentUser(null);
-    setAuthEmail("");
-    setAuthPassword("");
     navigate("/", { replace: true });
   };
 
@@ -420,7 +343,7 @@ function AppContent() {
   };
 
   const startApplication = (job: Job) => {
-    setApplicationName(currentUser?.name ?? "");
+    setApplicationName(currentUser?.full_name ?? "");
     setApplicationEmail(currentUser?.email ?? "");
     setApplicationPhone("");
     setApplicationEducation("");
@@ -484,6 +407,19 @@ function AppContent() {
       </div>
     </article>
   );
+
+  if (isRestoringAuth) {
+    return (
+      <div
+        className="app-container"
+        role="status"
+        aria-live="polite"
+        style={{ display: "grid", placeItems: "center", color: "#174a80", fontWeight: 600 }}
+      >
+        Memeriksa login otomatis...
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
@@ -1118,41 +1054,12 @@ function AppContent() {
           </section>
         )}
         {!selectedJob && (isLoginPage || isRegisterPage) && (
-          <section className="auth-card">
-            <h2>{isLoginPage ? "Selamat Datang Kembali" : "Buat Akun BUMN Career"}</h2>
-            <p>
-              {isLoginPage
-                ? "Masuk untuk mengelola profil dan aktivitas pencarian kerja."
-                : "Daftar untuk menyimpan lowongan dan mengelola profilmu."}
-            </p>
-            <form className="auth-form" onSubmit={isLoginPage ? handleLogin : handleRegister}>
-              {isRegisterPage && (
-                <label>
-                  Nama lengkap
-                  <input value={authName} onChange={(event) => setAuthName(event.target.value)} autoComplete="name" required placeholder="Nama lengkap" />
-                </label>
-              )}
-              <label>
-                Email
-                <input type="email" value={authEmail} onChange={(event) => setAuthEmail(event.target.value)} autoComplete="email" required placeholder="nama@email.com" />
-              </label>
-              <label>
-                Password
-                <input type="password" value={authPassword} onChange={(event) => setAuthPassword(event.target.value)} autoComplete={isLoginPage ? "current-password" : "new-password"} minLength={8} required placeholder="Minimal 8 karakter" />
-              </label>
-              {authError && <div className="auth-error" role="alert">{authError}</div>}
-              <button className="apply-button" type="submit">
-                {isLoginPage ? <><LogIn size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Masuk</> : <><UserPlus size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Daftar</>}
-              </button>
-            </form>
-            <button className="auth-link" onClick={() => { setAuthError(""); setAuthPassword(""); navigate(isLoginPage ? "/daftar" : "/login"); }}>
-              {isLoginPage ? "Belum punya akun? Daftar" : "Sudah punya akun? Login"}
-            </button>
-            <button className="auth-secondary" onClick={() => navigate("/profil")}>Kembali ke Profil</button>
-            <p style={{ marginTop: 16, marginBottom: 0, fontSize: 10 }}>
-              Akun disimpan hanya di browser/perangkat ini. Ini adalah autentikasi demo, bukan sistem akun produksi.
-            </p>
-          </section>
+          <AuthFlow
+            onAuthenticated={(user) => {
+              setCurrentUser(user);
+              navigate("/profil", { replace: true });
+            }}
+          />
         )}
 
         {applicationJob && (
@@ -1389,62 +1296,65 @@ function AppContent() {
           </>
         )}
 
-        {!selectedJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
+        {!selectedJob && !applicationJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
           <>
             <section className="page-header">
               <div>
                 <h2>Profil Pengguna</h2>
                 <div className="page-description">
-                  Kelola informasi akun dan lamaranmu.
+                  {currentUser ? "Informasi akun BUMN Career." : "Masuk atau buat akun untuk melanjutkan."}
                 </div>
               </div>
             </section>
-            <div className="profile-card">
-              <div className="profile-avatar">
-                <User size={32} />
-              </div>
-              <h3>{currentUser ? currentUser.name : "Selamat Datang!"}</h3>
-              <p>{currentUser ? currentUser.email : "Masuk untuk mengelola profil dan lamaran pekerjaan."}</p>
-              {currentUser ? (
-                <button className="apply-button" onClick={handleLogout}>
-                  <LogOut size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Keluar
-                </button>
-              ) : (
-                <>
-                  <button className="apply-button" onClick={() => navigate("/login")}>
-                    <LogIn size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Login
+            {currentUser ? (
+              <>
+                <section className="profile-card">
+                  <div className="profile-avatar">
+                    {currentUser.avatar ? (
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.full_name}
+                        style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <User size={32} />
+                    )}
+                  </div>
+                  <h3>{currentUser.full_name}</h3>
+                  <p style={{ margin: "6px 0", color: "#64748b" }}>{currentUser.phone}</p>
+                  <p style={{ margin: "6px 0 0", color: "#8290a0" }}>
+                    {currentUser.email || "Email belum ditambahkan"}
+                  </p>
+                </section>
+                <section className="section" style={{ paddingBottom: 24 }}>
+                  <div className="detail-section">
+                    <h3>Informasi Akun</h3>
+                    <div className="detail-fact">
+                      <span>Nama lengkap</span>
+                      <strong>{currentUser.full_name}</strong>
+                    </div>
+                    <div className="detail-fact" style={{ marginTop: 10 }}>
+                      <span>Nomor telepon</span>
+                      <strong>{currentUser.phone}</strong>
+                    </div>
+                    <div className="detail-fact" style={{ marginTop: 10 }}>
+                      <span>Email</span>
+                      <strong>{currentUser.email || "Belum ditambahkan"}</strong>
+                    </div>
+                  </div>
+                  <button className="apply-button" type="button" onClick={handleLogout}>
+                    <LogOut size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Keluar
                   </button>
-                  <button className="auth-secondary" onClick={() => navigate("/daftar")}>
-                    <UserPlus size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Daftar Akun
-                  </button>
-                </>
-              )}
-            </div>
-            <section className="section">
-              {[
-                "Data Pribadi",
-                "Riwayat Pendidikan",
-                "Pengalaman Kerja",
-                "Lamaran Saya",
-                "Pengaturan",
-              ].map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    background: "white",
-                    padding: 17,
-                    borderRadius: 10,
-                    marginBottom: 9,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 13,
-                  }}
-                >
-                  {item}
-                  <ChevronRight size={17} color="#8290a0" />
-                </div>
-              ))}
-            </section>
+                </section>
+              </>
+            ) : (
+              <AuthFlow
+                onAuthenticated={(user) => {
+                  setCurrentUser(user);
+                  navigate("/profil", { replace: true });
+                }}
+              />
+            )}
           </>
         )}
       </main>
