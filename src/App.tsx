@@ -410,6 +410,19 @@ function AppContent() {
     </article>
   );
 
+  if (isRestoringAuth) {
+    return (
+      <div
+        className="app-container"
+        role="status"
+        aria-live="polite"
+        style={{ display: "grid", placeItems: "center", color: "#174a80", fontWeight: 600 }}
+      >
+        Memeriksa login otomatis...
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       <style>{`
