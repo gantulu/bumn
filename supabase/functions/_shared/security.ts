@@ -48,16 +48,31 @@ export function optionsResponse(req: Request): Response {
   return new Response(null, { status: originAllowed(req) ? 204 : 403, headers: corsFor(req) });
 }
 
+function namedApiKey(pluralEnv: string, legacyEnv: string): string | null {
+  const encoded = Deno.env.get(pluralEnv);
+  if (encoded) {
+    try {
+      const keys = JSON.parse(encoded) as Record<string, unknown>;
+      const key = keys.default;
+      if (typeof key === "string" && key.length > 0) return key;
+    } catch {
+      console.error(`Invalid JSON in ${pluralEnv} environment variable.`);
+    }
+  }
+  return Deno.env.get(legacyEnv) ?? null;
+}
+
 export function createAdminClient() {
   const url = Deno.env.get("SUPABASE_URL");
-  const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const key = namedApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) throw new Error("Server configuration is incomplete.");
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
 export function createPublicClient() {
   const url = Deno.env.get("SUPABASE_URL");
-  const key = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+  const key = namedApiKey("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_ANON_KEY")
+    ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
   if (!url || !key) throw new Error("Public Supabase configuration is incomplete.");
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
