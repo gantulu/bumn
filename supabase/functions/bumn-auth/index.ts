@@ -119,6 +119,10 @@ Deno.serve(async (req: Request) => {
 
   try {
     const contentType = req.headers.get("content-type") || "";
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentType.includes("multipart/form-data") && contentLength > MAX_AVATAR_SIZE + 64 * 1024) {
+      return jsonResponse({ success: false, message: "Ukuran foto maksimal 5 MB." }, 413);
+    }
     let body: JsonBody;
     let avatarFile: File | null = null;
 
@@ -236,6 +240,9 @@ Deno.serve(async (req: Request) => {
       }
 
       const fullName = typeof input.full_name === "string" ? input.full_name.trim() : "";
+      if (input.email !== null && typeof input.email !== "string") {
+        return jsonResponse({ success: false, message: "Email harus berupa teks." }, 400);
+      }
       const emailValue = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
       const email = emailValue || null;
       if (fullName.length < 2 || fullName.length > 120) {
