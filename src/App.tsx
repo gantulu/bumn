@@ -41,6 +41,7 @@ type Job = {
   deadline: string;
   description: string;
   qualifications: string[];
+  imageUrl?: string;
 };
 
 const jobs: Job[] = [
@@ -86,6 +87,7 @@ const jobs: Job[] = [
     id: "LKG-003",
     title: "Staff Administrasi",
     company: "PT Bank Mandiri (Persero) Tbk",
+    imageUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=85",
     category: "Administrasi",
     location: "Jakarta Selatan",
     type: "Full Time",
@@ -809,6 +811,7 @@ function AppContent() {
         .detail-page-content { padding: 20px 18px 32px; max-width: 760px; margin: 0 auto; width: 100%; }
         .detail-hero, .detail-section { background: white; border: 1px solid #edf0f4; border-radius: 14px; padding: 17px; margin-bottom: 12px; }
         .detail-hero .company-logo { width: 52px; height: 52px; }
+        .detail-cover { display: block; width: 100%; height: 190px; object-fit: cover; border-radius: 11px; margin-bottom: 16px; background: #e8edf3; }
         .detail-hero h2 { margin: 14px 0 7px; font-size: 23px; line-height: 1.3; }
         .detail-hero .company-name { color: #526176; font-size: 13px; }
         .detail-hero .job-meta { margin-top: 13px; display: flex; flex-wrap: wrap; gap: 9px 14px; color: #64748b; font-size: 12px; }
@@ -945,6 +948,7 @@ function AppContent() {
         {selectedJob && (
           <section className="detail-page-content">
             <div className="detail-hero">
+              {selectedJob.imageUrl && <img className="detail-cover" src={selectedJob.imageUrl} alt={`Gambar utama ${selectedJob.title}`} loading="eager" />}
               <div className="company-logo"><Building2 size={25} /></div>
               <h2>{selectedJob.title}</h2>
               <div className="company-name">{selectedJob.company}</div>
