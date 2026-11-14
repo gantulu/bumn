@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import AuthFlow from "./components/auth/AuthFlow";
 import ProfilePage from "./components/profile/ProfilePage";
+import ApplicationPage from "./components/ApplicationPage";
 import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
 import {
   Home,
@@ -298,11 +299,6 @@ function AppContent() {
 
     return () => { active = false; };
   }, []);
-  const [applicationName, setApplicationName] = useState("");
-  const [applicationEmail, setApplicationEmail] = useState("");
-  const [applicationPhone, setApplicationPhone] = useState("");
-  const [applicationEducation, setApplicationEducation] = useState("");
-  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const handleLogout = () => {
     clearBumnCredentials();
     setCurrentUser(null);
@@ -344,17 +340,7 @@ function AppContent() {
   };
 
   const startApplication = (job: Job) => {
-    setApplicationName(currentUser?.full_name ?? "");
-    setApplicationEmail(currentUser?.email ?? "");
-    setApplicationPhone("");
-    setApplicationEducation("");
-    setApplicationSubmitted(false);
     navigate(`/lamar/${job.id}`);
-  };
-
-  const submitApplication = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setApplicationSubmitted(true);
   };
 
   const openSearch = () => {
@@ -1088,42 +1074,15 @@ function AppContent() {
         )}
 
         {applicationJob && (
-          <section className="application-card">
-            <button className="auth-link" type="button" onClick={() => navigate(`/lowongan/${applicationJob.id}`)}>
-              <ArrowLeft size={15} style={{ display: "inline", verticalAlign: "middle" }} /> Kembali ke detail lowongan
-            </button>
-            <h2>Formulir Lamaran</h2>
-            <p><strong>{applicationJob.title}</strong><br />{applicationJob.company} · {applicationJob.location}</p>
-            {applicationSubmitted ? (
-              <div className="application-success" role="status">
-                <strong>Simulasi lamaran berhasil.</strong><br />Data belum dikirim ke perusahaan. Fitur pengiriman lamaran memerlukan backend yang belum tersedia pada V1.
-              </div>
-            ) : (
-              <form className="application-form" onSubmit={submitApplication}>
-                <label>Nama lengkap
-                  <input value={applicationName} onChange={(event) => setApplicationName(event.target.value)} autoComplete="name" required placeholder="Masukkan nama lengkap" />
-                </label>
-                <label>Email
-                  <input type="email" value={applicationEmail} onChange={(event) => setApplicationEmail(event.target.value)} autoComplete="email" required placeholder="nama@email.com" />
-                </label>
-                <label>Nomor telepon
-                  <input type="tel" value={applicationPhone} onChange={(event) => setApplicationPhone(event.target.value)} autoComplete="tel" required placeholder="08xxxxxxxxxx" />
-                </label>
-                <label>Pendidikan terakhir
-                  <select value={applicationEducation} onChange={(event) => setApplicationEducation(event.target.value)} required>
-                    <option value="">Pilih pendidikan</option>
-                    <option value="SMA/SMK">SMA/SMK</option>
-                    <option value="D3">D3</option>
-                    <option value="S1">S1</option>
-                    <option value="S2">S2</option>
-                    <option value="S3">S3</option>
-                  </select>
-                </label>
-                <button className="apply-button" type="submit">Kirim Simulasi Lamaran</button>
-              </form>
-            )}
-            <p>Catatan: formulir ini hanya simulasi. Data lamaran tidak dikirim ke perusahaan karena API lowongan belum menyediakan endpoint pendaftaran.</p>
-          </section>
+          <ApplicationPage
+            jobId={applicationJob.id}
+            jobTitle={applicationJob.title}
+            company={applicationJob.company}
+            location={applicationJob.location}
+            user={currentUser}
+            onBack={() => navigate(`/lowongan/${applicationJob.id}`)}
+            onLogin={() => navigate("/login", { state: { from: location.pathname } })}
+          />
         )}
 
         {!selectedJob && !applicationJob && !isLoginPage && !isRegisterPage && activeTab === "home" && (
