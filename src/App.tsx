@@ -45,6 +45,8 @@ type Job = {
   salary_min: number | null;
   salary_max: number | null;
   salary_currency: string;
+  createdAt: string | null;
+  updatedAt: string | null;
 };
 
 type ApiJob = {
@@ -62,7 +64,9 @@ type ApiJob = {
   rich_text_description?: string | null;
   qualifications: string[] | null;
   closing_at: string | null;
-  cover_image_url?: string | null;
+  cover_image_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
 type JobsApiResponse = {
@@ -80,11 +84,16 @@ const JOBS_API_URL = "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/get-
 
 function formatSalary(min: number | null, max: number | null, currency: string): string {
   if (min == null && max == null) return "Tidak dicantumkan";
-  const formatter = new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: currency || "IDR",
-    maximumFractionDigits: 0,
-  });
+  let formatter: Intl.NumberFormat;
+  try {
+    formatter = new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: currency || "IDR",
+      maximumFractionDigits: 0,
+    });
+  } catch {
+    formatter = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+  }
   if (min != null && max != null) return `${formatter.format(min)} – ${formatter.format(max)}`;
   if (min != null) return `Mulai ${formatter.format(min)}`;
   return `Hingga ${formatter.format(max as number)}`;
@@ -120,6 +129,8 @@ function mapApiJob(item: ApiJob): Job {
     salary_min: item.salary_min,
     salary_max: item.salary_max,
     salary_currency: item.salary_currency || "IDR",
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
   };
 }
 
@@ -434,7 +445,7 @@ function AppContent() {
         </div>
         <div className="company-info">
           <strong>{job.company}</strong>
-          <span>Perusahaan BUMN</span>
+          <span>{job.category || "Kategori tidak dicantumkan"}</span>
         </div>
         <button
           className={`icon-button ${
@@ -456,6 +467,7 @@ function AppContent() {
         <span><MapPin size={14} />{job.location}</span>
         <span><Clock size={14} />{job.type}</span>
         <span><GraduationCap size={14} />{job.education}</span>
+        <span>Batas: {job.deadline}</span>
       </div>
 
       <div className="job-bottom">
@@ -1024,7 +1036,7 @@ function AppContent() {
                 <strong>{selectedJob.salary === "Kompetitif" ? "Kompetitif" : selectedJob.salary}</strong>
                 <small>{selectedJob.salary === "Kompetitif" ? "Nominal belum dicantumkan oleh sumber." : "Periode dan status gross/net belum dicantumkan."}</small>
               </div>
-              <p>Rincian gaji pokok, tunjangan, dan total kompensasi belum tersedia secara terpisah.</p>
+              <p>Nilai gaji ditampilkan sesuai salary_min, salary_max, dan salary_currency dari data lowongan.</p>
             </section>
 
             <section className="detail-section">
@@ -1033,9 +1045,7 @@ function AppContent() {
                 <div className="detail-fact"><span>Lokasi</span><strong>{selectedJob.location}</strong></div>
                 <div className="detail-fact"><span>Jenis pekerjaan</span><strong>{selectedJob.type}</strong></div>
                 <div className="detail-fact"><span>Pendidikan</span><strong>{selectedJob.education}</strong></div>
-                <div className="detail-fact"><span>Kategori</span><strong>{selectedJob.category}</strong></div>
-                <div className="detail-fact"><span>Pengalaman</span><strong>Belum dicantumkan</strong></div>
-                <div className="detail-fact"><span>Sistem kerja</span><strong>Belum dicantumkan</strong></div>
+                <div className="detail-fact"><span>Kategori</span><strong>{selectedJob.category || "Tidak dicantumkan"}</strong></div>
               </div>
             </section>
 
@@ -1049,28 +1059,10 @@ function AppContent() {
             </section>
 
             <section className="detail-section">
-              <h3>Tanggung Jawab Pekerjaan</h3>
-              <p>Belum dicantumkan pada data lowongan yang tersedia.</p>
-            </section>
-
-            <section className="detail-section">
               <h3>Kualifikasi dan Persyaratan</h3>
-              <ul>{selectedJob.qualifications.map((qualification) => <li key={qualification}>{qualification}</li>)}</ul>
-            </section>
-
-            <section className="detail-section">
-              <h3>Tunjangan dan Benefit</h3>
-              <p>Belum dicantumkan pada data lowongan yang tersedia.</p>
-            </section>
-
-            <section className="detail-section">
-              <h3>Tahapan Seleksi</h3>
-              <p>Informasi tahapan seleksi belum tersedia.</p>
-            </section>
-
-            <section className="detail-section">
-              <h3>Dokumen Persyaratan</h3>
-              <p>Daftar dokumen persyaratan belum tersedia.</p>
+              {selectedJob.qualifications.length ? (
+                <ul>{selectedJob.qualifications.map((qualification, index) => <li key={`${selectedJob.id}-qualification-${index}`}>{qualification}</li>)}</ul>
+              ) : <p>Kualifikasi belum dicantumkan.</p>}
             </section>
 
             <section className="detail-section">
@@ -1079,12 +1071,17 @@ function AppContent() {
                 <div className="detail-fact"><span>Batas pendaftaran</span><strong>{selectedJob.deadline}</strong></div>
                 <div className="detail-fact"><span>Status</span><strong>{isJobExpired ? "Kedaluwarsa" : "Tanggal penutupan belum terlewati"}</strong></div>
               </div>
-              <p>Metode dan tautan pendaftaran resmi belum tersedia pada data aplikasi.</p>
+              <p>Edge Function belum menyediakan field tautan pendaftaran. Gunakan informasi perusahaan untuk mencari kanal karier resminya.</p>
             </section>
 
             <section className="detail-section">
-              <h3>Sumber dan Verifikasi</h3>
-              <div className="source-note">Sumber resmi belum dapat diverifikasi. Jangan gunakan informasi ini sebagai pengumuman rekrutmen resmi sebelum dicocokkan dengan situs karier perusahaan.</div>
+              <h3>Informasi Data</h3>
+              <div className="detail-grid">
+                <div className="detail-fact"><span>ID Lowongan</span><strong>{selectedJob.id}</strong></div>
+                <div className="detail-fact"><span>Dibuat</span><strong>{formatDeadline(selectedJob.createdAt)}</strong></div>
+                <div className="detail-fact"><span>Diperbarui</span><strong>{formatDeadline(selectedJob.updatedAt)}</strong></div>
+              </div>
+              <p>Informasi ini dimuat dari Supabase melalui Edge Function get-bumn-jobs.</p>
             </section>
 
             <section className="detail-section">
@@ -1181,7 +1178,7 @@ function AppContent() {
                 <button className="apply-button" type="submit">Kirim Simulasi Lamaran</button>
               </form>
             )}
-            <p>Catatan: lowongan yang ditampilkan merupakan data contoh dan bukan pengumuman resmi.</p>
+            <p>Catatan: formulir ini hanya simulasi. Data lamaran tidak dikirim ke perusahaan karena API lowongan belum menyediakan endpoint pendaftaran.</p>
           </section>
         )}
 
@@ -1342,7 +1339,7 @@ function AppContent() {
               <div className="job-list">
                 {filteredJobs.length ? (
                   filteredJobs.map(renderJob)
-                ) : (
+                ) : isLoadingJobs || jobsError ? null : (
                   <div className="empty-state">
                     <Search size={38} />
                     <h3>Lowongan tidak ditemukan</h3>
@@ -1368,7 +1365,7 @@ function AppContent() {
               <div className="job-list">
                 {filteredJobs.length ? (
                   filteredJobs.map(renderJob)
-                ) : (
+                ) : isLoadingJobs || jobsError ? null : (
                   <div className="empty-state">
                     <Bookmark size={38} />
                     <h3>Belum ada lowongan tersimpan</h3>
