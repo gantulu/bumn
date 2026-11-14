@@ -117,8 +117,7 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
     setNotice("");
     try {
       const avatar = await uploadAvatar(selectedFile);
-      const next = await getProfile();
-      applyProfile({ ...next, avatar });
+      if (profile) applyProfile({ ...profile, avatar, updated_at: new Date().toISOString() });
       setSelectedFile(null);
       setPreview((current) => {
         if (current) URL.revokeObjectURL(current);
@@ -140,8 +139,7 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
     setNotice("");
     try {
       await deleteAvatar();
-      const next = await getProfile();
-      applyProfile(next);
+      if (profile) applyProfile({ ...profile, avatar: null, updated_at: new Date().toISOString() });
       setNotice("Foto profil berhasil dihapus.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal menghapus avatar.");
