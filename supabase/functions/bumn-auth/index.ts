@@ -257,7 +257,7 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ success: false, message: "Tanggal lahir tidak valid." }, 400);
       }
       const birthDate = typeof input.birth_date === "string" && input.birth_date ? input.birth_date : null;
-      const parsedBirthDate = birthDate ? new Date(\`${birthDate}T00:00:00.000Z\`) : null;
+      const parsedBirthDate = birthDate ? new Date(birthDate + "T00:00:00.000Z") : null;
       if (birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || !parsedBirthDate || Number.isNaN(parsedBirthDate.getTime()) || parsedBirthDate.toISOString().slice(0, 10) !== birthDate)) {
         return jsonResponse({ success: false, message: "Tanggal lahir tidak valid." }, 400);
       }
