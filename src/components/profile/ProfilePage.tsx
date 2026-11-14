@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Camera, LoaderCircle, LogOut, Save, Trash2, UserRound } from "lucide-react";
 import {
   deleteAvatar,
@@ -84,11 +84,11 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
     };
   }, [preview]);
 
-  const updateField = (key: keyof BumnProfileInput, value: string) => {
+  const updateField = <K extends keyof BumnProfileInput>(key: K, value: BumnProfileInput[K]) => {
     setForm((current) => ({ ...current, [key]: value }));
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setError("");
     setNotice("");
@@ -263,7 +263,7 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
               <input type="date" value={form.birth_date ?? ""} onChange={(e) => updateField("birth_date", e.target.value)} />
             </label>
             <label>Jenis kelamin
-              <select value={form.gender ?? ""} onChange={(e) => updateField("gender", e.target.value)}>
+              <select value={form.gender ?? ""} onChange={(e) => updateField("gender", (e.target.value || null) as BumnProfileInput["gender"])}>
                 <option value="">Pilih jenis kelamin</option>
                 <option value="Laki-laki">Laki-laki</option>
                 <option value="Perempuan">Perempuan</option>
