@@ -239,12 +239,10 @@ function AppContent() {
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authError, setAuthError] = useState("");
-  const [authNotice, setAuthNotice] = useState("");
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError("");
-    setAuthNotice("");
 
     const name = authName.trim();
     const email = authEmail.trim().toLowerCase();
@@ -275,7 +273,6 @@ function AppContent() {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setAuthError("");
-    setAuthNotice("");
 
     const email = authEmail.trim().toLowerCase();
     try {
