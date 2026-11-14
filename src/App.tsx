@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -167,6 +167,16 @@ type AuthUser = Pick<StoredUser, "name" | "email">;
 
 const USERS_STORAGE_KEY = "bumn_users";
 const SESSION_STORAGE_KEY = "bumn_session";
+const SAVED_JOBS_STORAGE_KEY = "bumn_saved_jobs";
+
+function readSavedJobs(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(SAVED_JOBS_STORAGE_KEY) ?? "[]");
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 function readStoredUsers(): StoredUser[] {
   try {
@@ -215,6 +225,15 @@ function AppContent() {
         ? "profile"
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
+  const applicationJob = jobs.find((job) => location.pathname === `/lamar/${job.id}`) ?? null;
+  useEffect(() => {
+    if (!selectedJob) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedJob(null);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [selectedJob]);
   const setActiveTab = (tab: Tab) => {
     const paths: Record<Tab, string> = {
       home: "/",
@@ -233,8 +252,13 @@ function AppContent() {
   };
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
-  const [saved, setSaved] = useState<string[]>([]);
+  const [saved, setSaved] = useState<string[]>(() => readSavedJobs());
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => readSessionUser());
+  const [applicationName, setApplicationName] = useState("");
+  const [applicationEmail, setApplicationEmail] = useState("");
+  const [applicationPhone, setApplicationPhone] = useState("");
+  const [applicationEducation, setApplicationEducation] = useState("");
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [authName, setAuthName] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -321,11 +345,29 @@ function AppContent() {
   }, [search, category, activeTab, saved]);
 
   const toggleSaved = (id: string) => {
-    setSaved((prev) =>
-      prev.includes(id)
-        ? prev.filter((item) => item !== id)
-        : [...prev, id]
-    );
+    const nextSaved = saved.includes(id)
+      ? saved.filter((item) => item !== id)
+      : [...saved, id];
+    setSaved(nextSaved);
+    try {
+      localStorage.setItem(SAVED_JOBS_STORAGE_KEY, JSON.stringify(nextSaved));
+    } catch {
+      // Saving remains available for the current session if storage is unavailable.
+    }
+  };
+
+  const startApplication = (job: Job) => {
+    setApplicationName(currentUser?.name ?? "");
+    setApplicationEmail(currentUser?.email ?? "");
+    setApplicationPhone("");
+    setApplicationEducation("");
+    setApplicationSubmitted(false);
+    navigate(`/lamar/${job.id}`);
+  };
+
+  const submitApplication = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setApplicationSubmitted(true);
   };
 
   const openSearch = () => {
@@ -754,11 +796,70 @@ function AppContent() {
         .detail-panel {
           background: #f6f8fb;
           width: 100%;
+          height: 90%;
           max-height: 90%;
-          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
           border-radius: 22px 22px 0 0;
-          padding: 20px;
         }
+        .detail-header {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 20px;
+          background: white;
+          border-bottom: 1px solid #edf0f4;
+        }
+        .detail-header-spacer { width: 38px; height: 38px; }
+        .detail-content {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
+          padding: 20px;
+          overscroll-behavior: contain;
+        }
+        .bottom-action-bar {
+          flex-shrink: 0;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+          gap: 10px;
+          padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
+          background: white;
+          border-top: 1px solid #e9edf2;
+        }
+        .save-action {
+          min-height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border: 1px solid #dce3ec;
+          border-radius: 11px;
+          background: white;
+          color: #174a80;
+          font-weight: 700;
+        }
+        .save-action.is-saved { background: #eaf1fa; border-color: #174a80; }
+        .bottom-action-bar .apply-button { margin: 0; min-height: 48px; }
+        .application-card {
+          margin: 18px;
+          padding: 20px;
+          border: 1px solid #edf0f4;
+          border-radius: 14px;
+          background: white;
+        }
+        .application-card h2 { margin: 0 0 8px; font-size: 19px; }
+        .application-card p { color: #64748b; font-size: 12px; line-height: 1.6; }
+        .application-form { display: grid; gap: 14px; margin-top: 20px; }
+        .application-form label { display: grid; gap: 7px; color: #39485c; font-size: 12px; font-weight: 650; }
+        .application-form input, .application-form select {
+          width: 100%; min-height: 45px; padding: 10px 12px;
+          border: 1px solid #dce3ec; border-radius: 9px;
+          background: white; color: #253247; font-size: 13px;
+        }
+        .application-success { padding: 15px; border-radius: 10px; background: #eaf7ef; color: #17633b; font-size: 13px; line-height: 1.6; }
         .detail-panel h2 { font-size: 20px; }
         .detail-panel h3 { font-size: 14px; }
         .detail-panel p, .detail-panel li {
@@ -767,11 +868,6 @@ function AppContent() {
           line-height: 1.7;
         }
         .detail-panel li { margin-bottom: 5px; }
-        .detail-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
         .apply-button {
           width: 100%;
           border: 0;
@@ -868,7 +964,46 @@ function AppContent() {
           </section>
         )}
 
-        {!isLoginPage && !isRegisterPage && activeTab === "home" && (
+        {applicationJob && (
+          <section className="application-card">
+            <button className="auth-link" type="button" onClick={() => navigate(`/lowongan/${applicationJob.id}`)}>
+              <ArrowLeft size={15} style={{ display: "inline", verticalAlign: "middle" }} /> Kembali ke detail lowongan
+            </button>
+            <h2>Formulir Lamaran</h2>
+            <p><strong>{applicationJob.title}</strong><br />{applicationJob.company} · {applicationJob.location}</p>
+            {applicationSubmitted ? (
+              <div className="application-success" role="status">
+                <strong>Simulasi lamaran berhasil.</strong><br />Data belum dikirim ke perusahaan. Fitur pengiriman lamaran memerlukan backend yang belum tersedia pada V1.
+              </div>
+            ) : (
+              <form className="application-form" onSubmit={submitApplication}>
+                <label>Nama lengkap
+                  <input value={applicationName} onChange={(event) => setApplicationName(event.target.value)} autoComplete="name" required placeholder="Masukkan nama lengkap" />
+                </label>
+                <label>Email
+                  <input type="email" value={applicationEmail} onChange={(event) => setApplicationEmail(event.target.value)} autoComplete="email" required placeholder="nama@email.com" />
+                </label>
+                <label>Nomor telepon
+                  <input type="tel" value={applicationPhone} onChange={(event) => setApplicationPhone(event.target.value)} autoComplete="tel" required placeholder="08xxxxxxxxxx" />
+                </label>
+                <label>Pendidikan terakhir
+                  <select value={applicationEducation} onChange={(event) => setApplicationEducation(event.target.value)} required>
+                    <option value="">Pilih pendidikan</option>
+                    <option value="SMA/SMK">SMA/SMK</option>
+                    <option value="D3">D3</option>
+                    <option value="S1">S1</option>
+                    <option value="S2">S2</option>
+                    <option value="S3">S3</option>
+                  </select>
+                </label>
+                <button className="apply-button" type="submit">Kirim Simulasi Lamaran</button>
+              </form>
+            )}
+            <p>Catatan: lowongan yang ditampilkan merupakan data contoh dan bukan pengumuman resmi.</p>
+          </section>
+        )}
+
+        {!applicationJob && !isLoginPage && !isRegisterPage && activeTab === "home" && (
           <>
             <section className="hero">
               <h1>Temukan Karier Impianmu!</h1>
@@ -1124,7 +1259,7 @@ function AppContent() {
       </main>
 
       {/* BOTTOM NAVIGATION */}
-      <nav className="bottom-nav">
+      {!applicationJob && <nav className="bottom-nav">
         {[
           { id: "home" as Tab, label: "Beranda", icon: Home },
           { id: "search" as Tab, label: "Cari Kerja", icon: Search },
@@ -1145,7 +1280,7 @@ function AppContent() {
             </button>
           );
         })}
-      </nav>
+      </nav>}
 
       {/* JOB DETAIL */}
       {selectedJob && (
@@ -1155,6 +1290,9 @@ function AppContent() {
         >
           <div
             className="detail-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detail lowongan ${selectedJob.title}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="detail-header">
@@ -1165,22 +1303,10 @@ function AppContent() {
                 <ArrowLeft size={21} />
               </button>
               <strong>Detail Lowongan</strong>
-              <button
-                className="icon-button"
-                onClick={() => toggleSaved(selectedJob.id)}
-              >
-                <Bookmark
-                  size={20}
-                  fill={
-                    saved.includes(selectedJob.id)
-                      ? "currentColor"
-                      : "none"
-                  }
-                />
-              </button>
+              <span className="detail-header-spacer" aria-hidden="true" />
             </div>
 
-            <div style={{ paddingTop: 20 }}>
+            <div className="detail-content">
               <div className="company-logo">
                 <Building2 size={25} />
               </div>
@@ -1214,12 +1340,18 @@ function AppContent() {
                 Batas pendaftaran: {selectedJob.deadline}
               </p>
 
+            </div>
+            <div className="bottom-action-bar">
               <button
-                className="apply-button"
-                onClick={() =>
-                  alert("Hubungkan lowongan ini dengan URL pendaftaran resmi.")
-                }
+                type="button"
+                className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`}
+                aria-pressed={saved.includes(selectedJob.id)}
+                onClick={() => toggleSaved(selectedJob.id)}
               >
+                <Bookmark size={18} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
+                {saved.includes(selectedJob.id) ? "Tersimpan" : "Simpan"}
+              </button>
+              <button type="button" className="apply-button" onClick={() => startApplication(selectedJob)}>
                 Lamar Sekarang
               </button>
             </div>
