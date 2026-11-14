@@ -1,63 +1,122 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "./styles/app.css";
 
 :root {
-  font-family: 'Inter', Arial, sans-serif;
-  color: #253247;
-  background: #edf1f6;
+  font-family: Inter, Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body {
-  touch-action: pan-x pan-y;
-}
-
 body {
   min-width: 320px;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-button,
-input,
-textarea,
-select {
+button, input, select, textarea {
   font: inherit;
 }
 
-button {
-  -webkit-tap-highlight-color: transparent;
-}
-
-button:focus-visible,
-input:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
   outline: 2px solid #2462a0;
   outline-offset: 2px;
 }
 
-#root {
-  display: flex;
-  flex-direction: column;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-::selection {
-  background: #dce8f7;
-  color: #123d72;
+.search-box-light {
+  margin-top: 0;
+  border: 1px solid #e1e6ed;
 }
+
+.section-heading-spaced {
+  margin-top: 20px;
+}
+
+.section-end {
+  padding-bottom: 25px;
+}
+
+.result-count {
+  color: #8290a0;
+  font-size: 12px;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 17px;
+  border-radius: 10px;
+  margin-bottom: 9px;
+  font-size: 13px;
+  color: #8290a0;
+}
+
+.bottom-action-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 1120px;
+  }
+
+  .hero {
+    padding: 36px 32px;
+  }
+
+  .section {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .job-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .detail-page-content {
+    max-width: 900px;
+  }
+
+  .application-card {
+    max-width: 700px;
+    margin: 32px auto;
+  }
+}
+
+@media (min-width: 1120px) {
+  .job-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Improve contrast for secondary text on light surfaces. */
+.company-info span,
+.job-meta,
+.salary-label,
+.page-description,
+.detail-fact span,
+.empty-state,
+.nav-item,
+.profile-row,
+.result-count,
+.search-box {
+  color: #64748b;
+}
+
+.loading-state { padding: 55px 25px; text-align: center; color: #64748b; }
