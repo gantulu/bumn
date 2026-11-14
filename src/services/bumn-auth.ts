@@ -7,19 +7,37 @@ export type BumnAuthUser = {
   is_active: boolean;
 };
 
+export type BumnProfile = BumnAuthUser & {
+  birth_place: string | null;
+  birth_date: string | null;
+  gender: "Laki-laki" | "Perempuan" | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postal_code: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BumnProfileInput = Pick<
+  BumnProfile,
+  "full_name" | "email" | "birth_place" | "birth_date" | "gender" | "address" | "city" | "province" | "postal_code"
+>;
+
 type AuthResponse = {
   success: boolean;
   message?: string;
   data?: {
     exists?: boolean;
-    user?: BumnAuthUser;
+    user?: BumnAuthUser | BumnProfile;
+    avatar?: string | null;
   };
 };
 
 const BUMN_AUTH_URL =
   "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/bumn-auth";
 
-async function requestAuth(payload: Record<string, string>): Promise<AuthResponse> {
+async function requestAuth(payload: Record<string, unknown>): Promise<AuthResponse> {
   const response = await fetch(BUMN_AUTH_URL, {
     method: "POST",
     headers: {
@@ -34,6 +52,12 @@ async function requestAuth(payload: Record<string, string>): Promise<AuthRespons
     throw new Error(result.message || `Permintaan gagal (HTTP ${response.status}).`);
   }
   return result;
+}
+
+function getStoredCredentials(): StoredBumnCredentials {
+  const credentials = readBumnCredentials();
+  if (!credentials) throw new Error("Sesi login tidak ditemukan. Silakan masuk kembali.");
+  return credentials;
 }
 
 export function normalizeBumnPhone(value: string): string {
@@ -69,7 +93,7 @@ export async function registerBumnUser(input: {
     password: input.password,
   });
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
-  return result.data.user;
+  return result.data.user as BumnAuthUser;
 }
 
 export async function loginBumnUser(input: {
@@ -82,7 +106,48 @@ export async function loginBumnUser(input: {
     password: input.password,
   });
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
-  return result.data.user;
+  return result.data.user as BumnAuthUser;
+}
+
+export async function getProfile(): Promise<BumnProfile> {
+  const result = await requestAuth({ action: "get-profile", ...getStoredCredentials() });
+  if (!result.data?.user) throw new Error("Data profil tidak ditemukan pada respons server.");
+  return result.data.user as BumnProfile;
+}
+
+export async function updateProfile(profile: BumnProfileInput): Promise<BumnProfile> {
+  const result = await requestAuth({
+    action: "update-profile",
+    ...getStoredCredentials(),
+    profile,
+  });
+  if (!result.data?.user) throw new Error("Data profil tidak ditemukan pada respons server.");
+  return result.data.user as BumnProfile;
+}
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const credentials = getStoredCredentials();
+  const formData = new FormData();
+  formData.append("action", "upload-avatar");
+  formData.append("phone", credentials.phone);
+  formData.append("password", credentials.password);
+  formData.append("file", file);
+
+  const response = await fetch(BUMN_AUTH_URL, {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: formData,
+  });
+  const result = (await response.json()) as AuthResponse;
+  if (!response.ok || !result.success || typeof result.data?.avatar !== "string") {
+    throw new Error(result.message || `Upload avatar gagal (HTTP ${response.status}).`);
+  }
+  return result.data.avatar;
+}
+
+export async function deleteAvatar(): Promise<void> {
+  const result = await requestAuth({ action: "delete-avatar", ...getStoredCredentials() });
+  if (result.data?.avatar !== null) throw new Error("Respons penghapusan avatar tidak sesuai.");
 }
 
 export type StoredBumnCredentials = {
