@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import AuthFlow from "./components/auth/AuthFlow";
+import ProfilePage from "./components/profile/ProfilePage";
 import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
 import {
   Home,
@@ -1321,65 +1322,16 @@ function AppContent() {
         )}
 
         {!selectedJob && !applicationJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
-          <>
-            <section className="page-header">
-              <div>
-                <h2>Profil Pengguna</h2>
-                <div className="page-description">
-                  {currentUser ? "Informasi akun BUMN Career." : "Masuk atau buat akun untuk melanjutkan."}
-                </div>
-              </div>
-            </section>
-            {currentUser ? (
-              <>
-                <section className="profile-card">
-                  <div className="profile-avatar">
-                    {currentUser.avatar ? (
-                      <img
-                        src={currentUser.avatar}
-                        alt={currentUser.full_name}
-                        style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
-                      />
-                    ) : (
-                      <User size={32} />
-                    )}
-                  </div>
-                  <h3>{currentUser.full_name}</h3>
-                  <p style={{ margin: "6px 0", color: "#64748b" }}>{currentUser.phone}</p>
-                  <p style={{ margin: "6px 0 0", color: "#8290a0" }}>
-                    {currentUser.email || "Email belum ditambahkan"}
-                  </p>
-                </section>
-                <section className="section" style={{ paddingBottom: 24 }}>
-                  <div className="detail-section">
-                    <h3>Informasi Akun</h3>
-                    <div className="detail-fact">
-                      <span>Nama lengkap</span>
-                      <strong>{currentUser.full_name}</strong>
-                    </div>
-                    <div className="detail-fact" style={{ marginTop: 10 }}>
-                      <span>Nomor telepon</span>
-                      <strong>{currentUser.phone}</strong>
-                    </div>
-                    <div className="detail-fact" style={{ marginTop: 10 }}>
-                      <span>Email</span>
-                      <strong>{currentUser.email || "Belum ditambahkan"}</strong>
-                    </div>
-                  </div>
-                  <button className="apply-button" type="button" onClick={handleLogout}>
-                    <LogOut size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Keluar
-                  </button>
-                </section>
-              </>
-            ) : (
-              <AuthFlow
-                onAuthenticated={(user) => {
-                  setCurrentUser(user);
-                  navigate("/profil", { replace: true });
-                }}
-              />
-            )}
-          </>
+          currentUser ? (
+            <ProfilePage onLogout={handleLogout} onUserUpdated={setCurrentUser} />
+          ) : (
+            <AuthFlow
+              onAuthenticated={(user) => {
+                setCurrentUser(user);
+                navigate("/profil", { replace: true });
+              }}
+            />
+          )
         )}
       </main>
 
