@@ -26,7 +26,7 @@ export default function App(){
  return <div className="app-container"><Header/><main className="main-content">
  {loading&&<p className="data-status" role="status">Memuat lowongan...</p>}
  {error&&<p className="data-error" role="alert">{error}</p>}
- {activeTab==="home"&&<HomePage jobs={jobs} savedIds={savedIds} onSearch={q=>openSearch(q)} onCategory={c=>openSearch("",c)} onToggleSaved={toggleSaved} onOpenJob={setSelectedJob}/>}
+ {activeTab==="home"&&<HomePage jobs={jobs} savedIds={savedIds} onSearch={setSearch} onSearchSubmit={()=>setActiveTab("search")} onCategory={c=>openSearch("",c)} onToggleSaved={toggleSaved} onOpenJob={setSelectedJob}/>}
  {activeTab==="search"&&<SearchPage jobs={filteredJobs} query={search} category={category} savedIds={savedIds} onQuery={setSearch} onCategory={setCategory} onToggleSaved={toggleSaved} onOpenJob={setSelectedJob}/>}
  {activeTab==="saved"&&<SavedPage jobs={jobs.filter(job=>isSaved(job.id))} savedIds={savedIds} onToggleSaved={toggleSaved} onOpenJob={setSelectedJob}/>}
  {activeTab==="profile"&&<ProfilePage/>}
