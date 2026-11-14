@@ -25,6 +25,8 @@ import {
   LogIn,
   UserPlus,
   LogOut,
+  Share2,
+  ExternalLink,
 } from "lucide-react";
 
 type Job = {
@@ -225,6 +227,22 @@ function AppContent() {
         ? "profile"
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
+  const isJobDetailPath = /^\/lowongan\/[^/]+$/.test(location.pathname);
+  const isInvalidJobDetail = isJobDetailPath && !selectedJob;
+  const [shareFeedback, setShareFeedback] = useState("");
+  const isJobExpired = selectedJob ? new Date(selectedJob.deadline).setHours(23, 59, 59, 999) < Date.now() : false;
+  const shareJob = async (job: Job) => {
+    const shareData = { title: `${job.title} — ${job.company}`, text: `Informasi lowongan ${job.title} di ${job.company}`, url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareData.url);
+        setShareFeedback("Tautan lowongan berhasil disalin.");
+      } else setShareFeedback("Fitur berbagi tidak didukung browser ini.");
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") setShareFeedback("Tautan belum dapat dibagikan.");
+    }
+  };
   const applicationJob = jobs.find((job) => location.pathname === `/lamar/${job.id}`) ?? null;
   const setActiveTab = (tab: Tab) => {
     const paths: Record<Tab, string> = {
@@ -788,28 +806,38 @@ function AppContent() {
           border-bottom: 1px solid #edf0f4;
         }
         .detail-page-header strong { font-size: 15px; }
-        .detail-page-content {
-          padding: 22px 20px 28px;
-        }
-        .detail-page-content .company-logo { width: 52px; height: 52px; }
-        .detail-page-content h2 { margin: 16px 0 7px; font-size: 22px; line-height: 1.3; }
-        .detail-page-content h3 { margin: 25px 0 9px; font-size: 15px; color: #253247; }
-        .detail-page-content p, .detail-page-content li {
-          color: #64748b;
-          font-size: 13px;
-          line-height: 1.75;
-        }
-        .detail-page-content ul { padding-left: 20px; }
-        .detail-main { background: #f6f8fb; }
+        .detail-page-content { padding: 20px 18px 32px; max-width: 760px; margin: 0 auto; width: 100%; }
+        .detail-hero, .detail-section { background: white; border: 1px solid #edf0f4; border-radius: 14px; padding: 17px; margin-bottom: 12px; }
+        .detail-hero .company-logo { width: 52px; height: 52px; }
+        .detail-hero h2 { margin: 14px 0 7px; font-size: 23px; line-height: 1.3; }
+        .detail-hero .company-name { color: #526176; font-size: 13px; }
+        .detail-hero .job-meta { margin-top: 13px; display: flex; flex-wrap: wrap; gap: 9px 14px; color: #64748b; font-size: 12px; }
+        .detail-page-content h3 { margin: 0 0 12px; font-size: 15px; color: #253247; }
+        .detail-page-content p, .detail-page-content li { color: #64748b; font-size: 13px; line-height: 1.75; }
+        .detail-page-content p { margin: 7px 0; }
+        .detail-page-content ul { padding-left: 20px; margin: 0; }
+        .detail-main { background: #f6f8fb; padding-bottom: 10px; }
+        .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .detail-fact { background: #f6f8fb; border-radius: 10px; padding: 11px; min-width: 0; }
+        .detail-fact span { display: block; color: #8290a0; font-size: 10px; margin-bottom: 5px; }
+        .detail-fact strong { display: block; color: #253247; font-size: 12px; overflow-wrap: anywhere; }
+        .salary-highlight { background: #edf5ff; border: 1px solid #d9e9fb; border-radius: 12px; padding: 15px; }
+        .salary-highlight span { display: block; color: #526b87; font-size: 11px; }
+        .salary-highlight strong { display: block; color: #174a80; font-size: 21px; margin-top: 5px; }
+        .salary-highlight small { display: block; color: #64748b; font-size: 11px; margin-top: 5px; }
+        .source-note { padding: 12px; border-radius: 9px; background: #fff7e8; color: #855b16; font-size: 12px; line-height: 1.6; }
+        .detail-actions-secondary { display: flex; justify-content: flex-end; margin-top: 10px; }
+        .share-feedback { color: #17633b; font-size: 11px; }
+        .related-job { width: 100%; text-align: left; border: 1px solid #edf0f4; border-radius: 10px; background: #fff; padding: 12px; margin-top: 8px; color: #253247; }
+        .related-job strong { display: block; font-size: 12px; }
+        .related-job span { display: block; color: #8290a0; font-size: 11px; margin-top: 5px; }
         .bottom-action-bar {
-          flex-shrink: 0;
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
-          gap: 10px;
-          padding: 12px 20px calc(12px + env(safe-area-inset-bottom));
-          background: white;
-          border-top: 1px solid #e9edf2;
+          flex-shrink: 0; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, .8fr) minmax(0, 1.5fr);
+          gap: 8px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: white; border-top: 1px solid #e9edf2;
         }
+        .share-action { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dce3ec; border-radius: 11px; background: white; color: #174a80; font-size: 12px; font-weight: 700; }
+        .bottom-action-bar .apply-button { margin: 0; min-height: 48px; padding: 10px; font-size: 12px; }
+        .bottom-action-bar .apply-button:disabled { background: #aab4c1; cursor: not-allowed; }
         .save-action {
           min-height: 48px;
           display: flex;
@@ -886,7 +914,7 @@ function AppContent() {
       `}</style>
 
       {/* HEADER */}
-      {selectedJob ? (
+      {isJobDetailPath ? (
         <header className="detail-page-header">
           <button
             className="icon-button"
@@ -916,24 +944,105 @@ function AppContent() {
       <main className={`main-content ${selectedJob ? "detail-main" : ""}`}>
         {selectedJob && (
           <section className="detail-page-content">
-            <div className="company-logo">
-              <Building2 size={25} />
+            <div className="detail-hero">
+              <div className="company-logo"><Building2 size={25} /></div>
+              <h2>{selectedJob.title}</h2>
+              <div className="company-name">{selectedJob.company}</div>
+              <div className="job-meta">
+                <span><MapPin size={14} style={{ display: "inline", verticalAlign: "middle" }} /> {selectedJob.location}</span>
+                <span><Clock size={14} style={{ display: "inline", verticalAlign: "middle" }} /> {selectedJob.type}</span>
+                <span><GraduationCap size={14} style={{ display: "inline", verticalAlign: "middle" }} /> {selectedJob.education}</span>
+              </div>
+              <div className="source-note" style={{ marginTop: 15 }} role="note">
+                <CheckCircle2 size={15} style={{ display: "inline", verticalAlign: "middle" }} /> Data contoh aplikasi. Status perusahaan dan lowongan belum diverifikasi sebagai pengumuman resmi.
+              </div>
             </div>
-            <h2>{selectedJob.title}</h2>
-            <strong>{selectedJob.company}</strong>
-            <p><MapPin size={14} style={{ display: "inline" }} /> {selectedJob.location}</p>
-            <div className="notice" role="note">
-              <CheckCircle2 size={15} style={{ display: "inline" }} /> Informasi contoh lowongan, bukan pengumuman resmi.
+
+            <section className="detail-section">
+              <h3>Informasi Gaji</h3>
+              <div className="salary-highlight">
+                <span>Estimasi kompensasi</span>
+                <strong>{selectedJob.salary === "Kompetitif" ? "Kompetitif" : selectedJob.salary}</strong>
+                <small>{selectedJob.salary === "Kompetitif" ? "Nominal belum dicantumkan oleh sumber." : "Periode dan status gross/net belum dicantumkan."}</small>
+              </div>
+              <p>Rincian gaji pokok, tunjangan, dan total kompensasi belum tersedia secara terpisah.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Ringkasan Pekerjaan</h3>
+              <div className="detail-grid">
+                <div className="detail-fact"><span>Lokasi</span><strong>{selectedJob.location}</strong></div>
+                <div className="detail-fact"><span>Jenis pekerjaan</span><strong>{selectedJob.type}</strong></div>
+                <div className="detail-fact"><span>Pendidikan</span><strong>{selectedJob.education}</strong></div>
+                <div className="detail-fact"><span>Kategori</span><strong>{selectedJob.category}</strong></div>
+                <div className="detail-fact"><span>Pengalaman</span><strong>Belum dicantumkan</strong></div>
+                <div className="detail-fact"><span>Sistem kerja</span><strong>Belum dicantumkan</strong></div>
+              </div>
+            </section>
+
+            <section className="detail-section">
+              <h3>Deskripsi Pekerjaan</h3>
+              <p>{selectedJob.description}</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Tanggung Jawab Pekerjaan</h3>
+              <p>Belum dicantumkan pada data lowongan yang tersedia.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Kualifikasi dan Persyaratan</h3>
+              <ul>{selectedJob.qualifications.map((qualification) => <li key={qualification}>{qualification}</li>)}</ul>
+            </section>
+
+            <section className="detail-section">
+              <h3>Tunjangan dan Benefit</h3>
+              <p>Belum dicantumkan pada data lowongan yang tersedia.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Tahapan Seleksi</h3>
+              <p>Informasi tahapan seleksi belum tersedia.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Dokumen Persyaratan</h3>
+              <p>Daftar dokumen persyaratan belum tersedia.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Informasi Pendaftaran</h3>
+              <div className="detail-grid">
+                <div className="detail-fact"><span>Batas pendaftaran</span><strong>{selectedJob.deadline}</strong></div>
+                <div className="detail-fact"><span>Status</span><strong>{isJobExpired ? "Kedaluwarsa" : "Tanggal penutupan belum terlewati"}</strong></div>
+              </div>
+              <p>Metode dan tautan pendaftaran resmi belum tersedia pada data aplikasi.</p>
+            </section>
+
+            <section className="detail-section">
+              <h3>Sumber dan Verifikasi</h3>
+              <div className="source-note">Sumber resmi belum dapat diverifikasi. Jangan gunakan informasi ini sebagai pengumuman rekrutmen resmi sebelum dicocokkan dengan situs karier perusahaan.</div>
+            </section>
+
+            <section className="detail-section">
+              <h3>Lowongan Terkait</h3>
+              {jobs.filter((job) => job.id !== selectedJob.id && job.category === selectedJob.category).length ? (
+                jobs.filter((job) => job.id !== selectedJob.id && job.category === selectedJob.category).map((job) => (
+                  <button className="related-job" key={job.id} type="button" onClick={() => navigate(`/lowongan/${job.id}`)}>
+                    <strong>{job.title}</strong><span>{job.company} · {job.location}</span>
+                  </button>
+                ))
+              ) : <p>Belum ada lowongan lain dalam kategori ini.</p>}
+            </section>
+          </section>
+        )}
+        {isInvalidJobDetail && (
+          <section className="detail-page-content">
+            <div className="detail-section">
+              <h2>Lowongan tidak ditemukan</h2>
+              <p>Periksa kembali tautan atau kembali ke daftar lowongan.</p>
+              <button className="apply-button" type="button" onClick={() => navigate("/lowongan")}>Kembali ke daftar lowongan</button>
             </div>
-            <h3>Deskripsi Pekerjaan</h3>
-            <p>{selectedJob.description}</p>
-            <h3>Kualifikasi</h3>
-            <ul>{selectedJob.qualifications.map((qualification) => <li key={qualification}>{qualification}</li>)}</ul>
-            <h3>Informasi Lowongan</h3>
-            <p>Jenis pekerjaan: {selectedJob.type}</p>
-            <p>Pendidikan: {selectedJob.education}</p>
-            <p>Estimasi gaji: {selectedJob.salary}</p>
-            <p><CalendarDays size={14} style={{ display: "inline" }} /> Batas pendaftaran: {selectedJob.deadline}</p>
           </section>
         )}
         {!selectedJob && (isLoginPage || isRegisterPage) && (
@@ -1269,7 +1378,7 @@ function AppContent() {
       </main>
 
       {/* BOTTOM NAVIGATION */}
-      {!applicationJob && !selectedJob && <nav className="bottom-nav">
+      {!applicationJob && !isJobDetailPath && <nav className="bottom-nav">
         {[
           { id: "home" as Tab, label: "Beranda", icon: Home },
           { id: "search" as Tab, label: "Cari Kerja", icon: Search },
@@ -1295,20 +1404,19 @@ function AppContent() {
       {/* DETAIL PAGE ACTIONS */}
       {selectedJob && (
         <div className="bottom-action-bar" aria-label="Aksi lowongan">
-          <button
-            type="button"
-            className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`}
-            aria-pressed={saved.includes(selectedJob.id)}
-            onClick={() => toggleSaved(selectedJob.id)}
-          >
-            <Bookmark size={18} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
+          <button type="button" className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`} aria-pressed={saved.includes(selectedJob.id)} onClick={() => toggleSaved(selectedJob.id)}>
+            <Bookmark size={17} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
             {saved.includes(selectedJob.id) ? "Tersimpan" : "Simpan"}
           </button>
-          <button type="button" className="apply-button" onClick={() => startApplication(selectedJob)}>
-            Lamar Sekarang
+          <button type="button" className="share-action" onClick={() => void shareJob(selectedJob)}>
+            <Share2 size={17} /> Bagikan
+          </button>
+          <button type="button" className="apply-button" disabled={isJobExpired} onClick={() => startApplication(selectedJob)}>
+            {isJobExpired ? "Pendaftaran Ditutup" : "Lamar Sekarang"}
           </button>
         </div>
       )}
+      {selectedJob && shareFeedback && <div className="share-feedback" role="status" style={{ textAlign: "center", padding: "4px 10px" }}>{shareFeedback}</div>}
 
     </div>
   );
