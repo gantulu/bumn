@@ -21,12 +21,10 @@ import {
   SlidersHorizontal,
   X,
   CheckCircle2,
-  CalendarDays,
   LogIn,
   UserPlus,
   LogOut,
   Share2,
-  ExternalLink,
 } from "lucide-react";
 
 type Job = {
