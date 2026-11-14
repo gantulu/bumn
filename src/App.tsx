@@ -898,8 +898,11 @@ function AppContent() {
         .auth-form input:focus { border-color: #174a80; box-shadow: 0 0 0 3px #174a8018; }
         .auth-form input:disabled { background: #f4f6f9; color: #718096; cursor: not-allowed; }
         .auth-form input[aria-invalid="true"] { border-color: #d92d20; }
+        .auth-field { display: flex; flex-direction: column; gap: 8px; }
+        .auth-field > label { display: flex; flex-direction: column; gap: 8px; color: #39485c; font-size: 12px; font-weight: 700; }
         .auth-input-wrap { position: relative; display: flex; align-items: center; }
         .auth-input-wrap input { padding-right: 48px; }
+        .auth-field-error { margin: 0; color: #b42318; font-size: 11px; line-height: 1.4; }
         .auth-password-toggle {
           position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
           width: 38px; height: 38px; display: grid; place-items: center;
