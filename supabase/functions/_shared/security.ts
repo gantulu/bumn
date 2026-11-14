@@ -146,7 +146,7 @@ export async function authenticateSession(
   if (!session) return null;
 
   const { data: user, error: userError } = await db.from("bumn_users")
-    .select("id,full_name,phone,email,avatar,is_active,birth_place,birth_date,gender,address,city,province,postal_code,created_at,updated_at")
+    .select("id,full_name,phone,email,avatar,is_active,birth_place,birth_date,gender,address,city,province,postal_code,cv_headline,cv_summary,cv_skills,cv_education,cv_experiences,cv_certifications,cv_languages,cv_portfolio_url,cv_linkedin_url,cv_website_url,cv_updated_at,created_at,updated_at")
     .eq("id", session.user_id)
     .maybeSingle();
   if (userError) throw new Error("Account lookup failed.");
