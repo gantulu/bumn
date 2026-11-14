@@ -1,5 +1,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "./components/ui-kit/tokens.css";
+@import "./components/ui-kit/ui-kit.css";
 
 :root {
   font-family: 'Inter', Arial, sans-serif;

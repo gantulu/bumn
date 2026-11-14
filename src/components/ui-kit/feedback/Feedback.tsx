@@ -1,0 +1,2 @@
+import { CheckCircle2, X } from "lucide-react";
+export function Toast({message,onClose}:{message:string;onClose?:()=>void}){return <div className="ui-kit-toast" role="status" aria-live="polite"><CheckCircle2 size={17}/><span style={{flex:1}}>{message}</span>{onClose&&<button type="button" aria-label="Tutup notifikasi" onClick={onClose} style={{border:0,background:"transparent",color:"inherit",cursor:"pointer"}}><X size={15}/></button>}</div>;}

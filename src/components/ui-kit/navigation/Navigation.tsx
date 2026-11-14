@@ -1,0 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+import { Bell, BriefcaseBusiness } from "lucide-react";
+export function AppHeader({title="BUMN CAREER"}:{title?:string}){return <header className="ui-kit-topbar"><div className="ui-kit-brand"><span className="ui-kit-brand-mark"><BriefcaseBusiness size={20}/></span><span>{title}</span></div><button type="button" className="ui-kit-icon-button" aria-label="Notifikasi"><Bell size={18}/></button></header>;}
+export type NavigationItem={id:string;label:string;icon:LucideIcon};
+export function BottomNavigation({items,active,onChange}:{items:NavigationItem[];active:string;onChange:(id:string)=>void}){return <nav className="ui-kit-nav" aria-label="Navigasi utama">{items.map(({id,label,icon:Icon})=><button type="button" key={id} className={`ui-kit-nav-item ${active===id?"is-active":""}`} aria-current={active===id?"page":undefined} onClick={()=>onChange(id)}><Icon size={18}/><span>{label}</span></button>)}</nav>;}

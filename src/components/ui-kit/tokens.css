@@ -1,0 +1,7 @@
+:root {
+  --ui-brand-950:#10264b;--ui-brand-900:#172f59;--ui-brand-800:#1e4075;--ui-brand-700:#24539a;--ui-brand-600:#2563eb;--ui-brand-100:#dbeafe;--ui-brand-50:#eff6ff;
+  --ui-ink:#172033;--ui-muted:#64748b;--ui-line:#e2e8f0;--ui-surface:#fff;--ui-canvas:#f5f7fb;
+  --ui-success:#15803d;--ui-success-bg:#f0fdf4;--ui-warning:#b45309;--ui-warning-bg:#fffbeb;--ui-danger:#b91c1c;--ui-danger-bg:#fef2f2;--ui-info:#1d4ed8;--ui-info-bg:#eff6ff;
+  --ui-radius-sm:8px;--ui-radius-md:12px;--ui-radius-lg:18px;--ui-shadow-card:0 8px 28px rgba(16,38,75,.06);
+  --ui-space-1:4px;--ui-space-2:8px;--ui-space-3:12px;--ui-space-4:16px;--ui-space-5:20px;--ui-space-6:24px;--ui-space-8:32px;
+}

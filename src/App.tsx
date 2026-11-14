@@ -4,6 +4,7 @@ import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-route
 import AuthFlow from "./components/auth/AuthFlow";
 import ProfilePage from "./components/profile/ProfilePage";
 import ApplicationPage from "./components/ApplicationPage";
+import ComponentShowcase from "./pages/ComponentShowcase";
 import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
 import {
   Home,
@@ -1340,6 +1341,7 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
+        <Route path="/ui-kit" element={<ComponentShowcase />} />
         <Route path="/*" element={<AppContent />} />
       </Routes>
     </HashRouter>
