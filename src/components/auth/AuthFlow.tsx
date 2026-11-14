@@ -4,7 +4,6 @@ import {
   loginBumnUser,
   registerBumnUser,
   type BumnAuthUser,
-  saveBumnCredentials,
   normalizeBumnPhone,
   isValidBumnPhone,
 } from "../../services/bumn-auth";
@@ -77,7 +76,6 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
         email: email.trim(),
         password,
       });
-      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       setConfirmPassword("");
       onAuthenticated(user);
