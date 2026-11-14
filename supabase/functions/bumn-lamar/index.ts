@@ -155,7 +155,7 @@ function mapRpcError(message: string): { status: number; message: string } {
   if (/only draft|state changed|deadline has passed|no longer available/i.test(message)) {
     return { status: 409, message };
   }
-  if (/required|complete|education level|cannot be validated/i.test(message)) {
+  if (/required|complete|education level|education major|cannot be validated/i.test(message)) {
     return { status: 400, message };
   }
   return { status: 500, message: "Terjadi kesalahan pada server." };
