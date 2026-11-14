@@ -118,3 +118,5 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .search-box {
   color: #64748b;
 }
+
+.loading-state { padding: 55px 25px; text-align: center; color: #64748b; }
