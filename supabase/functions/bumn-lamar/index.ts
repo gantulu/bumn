@@ -156,7 +156,11 @@ function snapshotForDraftUpdate(application: Body, updates: Body): Body {
  const identity: Body = { full_name: application.full_name, email: application.email, phone: application.phone, ...previousIdentity };
  if ("full_name" in updates) identity.full_name = updates.full_name;
  if ("email" in updates) identity.email = updates.email;
- const cv: Body = { headline: application.cv_title ?? null, summary: application.cv_summary ?? null, skills: application.cv_skills ?? [], education: [], experiences: [], certifications: [], languages: [], portfolio_url: application.cv_portfolio_url ?? null, ...previousCv };
+ const legacyEducation: Body = { level: application.education_level, institution: application.education_institution, major: application.education_major, degree: application.education_degree, start_year: application.education_start_year, graduation_year: application.education_graduation_year, gpa: application.education_gpa, description: application.education_description };
+ const legacyExperience: Body = { type: application.experience_type, company: application.experience_company, position: application.experience_position, employment_type: application.experience_employment_type, location: application.experience_location, start_date: application.experience_start_date, end_date: application.experience_end_date, is_current: application.experience_is_current, description: application.experience_description, responsibilities: application.experience_responsibilities ?? [] };
+ const hasLegacyEducation = Object.values(legacyEducation).some((value) => value !== null && value !== undefined && value !== "");
+ const hasLegacyExperience = Object.values(legacyExperience).some((value) => value !== null && value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0));
+ const cv: Body = { headline: application.cv_title ?? null, summary: application.cv_summary ?? null, skills: application.cv_skills ?? [], education: hasLegacyEducation ? [legacyEducation] : [], experiences: hasLegacyExperience ? [legacyExperience] : [], certifications: [], languages: [], portfolio_url: application.cv_portfolio_url ?? null, ...previousCv };
  if ("cv_title" in updates) cv.headline = updates.cv_title;
  if ("cv_summary" in updates) cv.summary = updates.cv_summary;
  if ("cv_skills" in updates) cv.skills = updates.cv_skills;
