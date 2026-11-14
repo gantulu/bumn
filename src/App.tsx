@@ -55,12 +55,12 @@ type ApiJob = {
   company: string;
   category: string;
   location: string;
-  employment_type: string;
-  education: string;
+  employment_type: string | null;
+  education: string | null;
   salary_min: number | null;
   salary_max: number | null;
-  salary_currency: string;
-  description: string;
+  salary_currency: string | null;
+  description: string | null;
   rich_text_description?: string | null;
   qualifications: string[] | null;
   closing_at: string | null;
