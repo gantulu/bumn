@@ -36,6 +36,17 @@ async function requestAuth(payload: Record<string, string>): Promise<AuthRespons
   return result;
 }
 
+export function normalizeBumnPhone(value: string): string {
+  const digits = value.replace(/\\D/g, "");
+  if (digits.startsWith("0")) return `62${digits.slice(1)}`;
+  if (digits.startsWith("8")) return `62${digits}`;
+  return digits;
+}
+
+export function isValidBumnPhone(value: string): boolean {
+  return /^62\\d{8,13}$/.test(normalizeBumnPhone(value));
+}
+
 export async function checkPhone(phone: string): Promise<boolean> {
   const result = await requestAuth({ action: "check-phone", phone });
   if (typeof result.data?.exists !== "boolean") {
