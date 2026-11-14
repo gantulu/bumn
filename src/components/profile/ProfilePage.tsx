@@ -26,6 +26,7 @@ const emptyProfile: BumnProfileInput = {
   city: "",
   province: "",
   postal_code: "",
+  cv_headline: "", cv_summary: "", cv_skills: [], cv_education: [], cv_experiences: [], cv_certifications: [], cv_languages: [], cv_portfolio_url: "", cv_linkedin_url: "", cv_website_url: "",
 };
 
 function profileToInput(profile: BumnProfile): BumnProfileInput {
@@ -39,6 +40,7 @@ function profileToInput(profile: BumnProfile): BumnProfileInput {
     city: profile.city ?? "",
     province: profile.province ?? "",
     postal_code: profile.postal_code ?? "",
+    cv_headline: profile.cv_headline ?? "", cv_summary: profile.cv_summary ?? "", cv_skills: profile.cv_skills ?? [], cv_education: profile.cv_education ?? [], cv_experiences: profile.cv_experiences ?? [], cv_certifications: profile.cv_certifications ?? [], cv_languages: profile.cv_languages ?? [], cv_portfolio_url: profile.cv_portfolio_url ?? "", cv_linkedin_url: profile.cv_linkedin_url ?? "", cv_website_url: profile.cv_website_url ?? "",
   };
 }
 
@@ -54,10 +56,20 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [cvSkillsText, setCvSkillsText] = useState("");
+  const [cvEducationJson, setCvEducationJson] = useState("[]");
+  const [cvExperiencesJson, setCvExperiencesJson] = useState("[]");
+  const [cvCertificationsJson, setCvCertificationsJson] = useState("[]");
+  const [cvLanguagesJson, setCvLanguagesJson] = useState("[]");
 
   const applyProfile = (next: BumnProfile) => {
     setProfile(next);
     setForm(profileToInput(next));
+    setCvSkillsText((next.cv_skills ?? []).join("\n"));
+    setCvEducationJson(JSON.stringify(next.cv_education ?? [], null, 2));
+    setCvExperiencesJson(JSON.stringify(next.cv_experiences ?? [], null, 2));
+    setCvCertificationsJson(JSON.stringify(next.cv_certifications ?? [], null, 2));
+    setCvLanguagesJson(JSON.stringify(next.cv_languages ?? [], null, 2));
     onUserUpdated(next);
   };
 
@@ -154,8 +166,25 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
     setError("");
     setNotice("");
     try {
+      let cvEducation: BumnProfile["cv_education"];
+      let cvExperiences: BumnProfile["cv_experiences"];
+      let cvCertifications: BumnProfile["cv_certifications"];
+      let cvLanguages: BumnProfile["cv_languages"];
+      try {
+        cvEducation = JSON.parse(cvEducationJson);
+        cvExperiences = JSON.parse(cvExperiencesJson);
+        cvCertifications = JSON.parse(cvCertificationsJson);
+        cvLanguages = JSON.parse(cvLanguagesJson);
+      } catch {
+        throw new Error("Format JSON pada data pendidikan, pengalaman, sertifikasi, atau bahasa tidak valid.");
+      }
       const next = await updateProfile({
         ...form,
+        cv_skills: cvSkillsText.split("\n").map((item) => item.trim()).filter(Boolean),
+        cv_education: cvEducation,
+        cv_experiences: cvExperiences,
+        cv_certifications: cvCertifications,
+        cv_languages: cvLanguages,
         full_name: form.full_name.trim(),
         email: form.email?.trim().toLowerCase() || null,
         birth_place: form.birth_place?.trim() || null,
@@ -288,6 +317,22 @@ export default function ProfilePage({ onLogout, onUserUpdated }: Props) {
           </div>
         </section>
 
+        <section className="bumn-profile-card">
+          <h3>Curriculum Vitae</h3>
+          <p className="bumn-profile-help">Data CV disimpan pada profil dan otomatis disalin ke draft lamaran. Riwayat pendidikan, pengalaman, sertifikasi, dan bahasa menggunakan JSON array. Pembacaan PDF belum termasuk versi ini.</p>
+          <div className="bumn-profile-grid">
+            <label className="full">Headline profesional<input maxLength={160} value={form.cv_headline ?? ""} onChange={(e) => updateField("cv_headline", e.target.value)} placeholder="Contoh: Staff Administrasi | S1 Manajemen" /></label>
+            <label className="full">Ringkasan profesional<textarea rows={4} maxLength={3000} value={form.cv_summary ?? ""} onChange={(e) => updateField("cv_summary", e.target.value)} /></label>
+            <label className="full">Keahlian (satu per baris)<textarea rows={3} value={cvSkillsText} onChange={(e) => setCvSkillsText(e.target.value)} placeholder="Microsoft Office&#10;Administrasi&#10;Komunikasi" /></label>
+            <label className="full">Pendidikan (JSON array)<textarea rows={7} value={cvEducationJson} onChange={(e) => setCvEducationJson(e.target.value)} spellCheck={false} /></label>
+            <label className="full">Pengalaman kerja (JSON array)<textarea rows={8} value={cvExperiencesJson} onChange={(e) => setCvExperiencesJson(e.target.value)} spellCheck={false} /></label>
+            <label className="full">Sertifikasi (JSON array)<textarea rows={4} value={cvCertificationsJson} onChange={(e) => setCvCertificationsJson(e.target.value)} spellCheck={false} /></label>
+            <label className="full">Bahasa (JSON array)<textarea rows={3} value={cvLanguagesJson} onChange={(e) => setCvLanguagesJson(e.target.value)} spellCheck={false} /></label>
+            <label>Portofolio<input type="url" maxLength={2048} value={form.cv_portfolio_url ?? ""} onChange={(e) => updateField("cv_portfolio_url", e.target.value)} placeholder="https://" /></label>
+            <label>LinkedIn<input type="url" maxLength={2048} value={form.cv_linkedin_url ?? ""} onChange={(e) => updateField("cv_linkedin_url", e.target.value)} placeholder="https://" /></label>
+            <label className="full">Website<input type="url" maxLength={2048} value={form.cv_website_url ?? ""} onChange={(e) => updateField("cv_website_url", e.target.value)} placeholder="https://" /></label>
+          </div>
+        </section>
         <div className="bumn-profile-form-actions">
           <button className="bumn-profile-button primary" type="submit" disabled={saving || uploading || deletingAvatar}>
             {saving ? <LoaderCircle className="bumn-spin" size={16} /> : <Save size={16} />}
