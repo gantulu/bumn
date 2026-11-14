@@ -887,7 +887,7 @@ function AppContent() {
         .related-job strong { display: block; font-size: 12px; }
         .related-job span { display: block; color: #8290a0; font-size: 11px; margin-top: 5px; }
         .bottom-action-bar {
-          flex-shrink: 0; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, .8fr) minmax(0, 1.5fr);
+          flex-shrink: 0; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr);
           gap: 8px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); background: white; border-top: 1px solid #e9edf2;
         }
         .share-action { min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #dce3ec; border-radius: 11px; background: white; color: #174a80; font-size: 12px; font-weight: 700; }
@@ -980,7 +980,19 @@ function AppContent() {
             <ArrowLeft size={21} />
           </button>
           <strong>Detail Lowongan</strong>
-          <span aria-hidden="true" style={{ width: 38, height: 38 }} />
+          {selectedJob ? (
+            <button
+              className="icon-button"
+              type="button"
+              aria-label="Bagikan lowongan"
+              title="Bagikan"
+              onClick={() => void shareJob(selectedJob)}
+            >
+              <Share2 size={21} />
+            </button>
+          ) : (
+            <span aria-hidden="true" style={{ width: 38, height: 38 }} />
+          )}
         </header>
       ) : (
         <header className="header">
@@ -1467,9 +1479,6 @@ function AppContent() {
           <button type="button" className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`} aria-pressed={saved.includes(selectedJob.id)} onClick={() => toggleSaved(selectedJob.id)}>
             <Bookmark size={17} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
             {saved.includes(selectedJob.id) ? "Tersimpan" : "Simpan"}
-          </button>
-          <button type="button" className="share-action" onClick={() => void shareJob(selectedJob)}>
-            <Share2 size={17} /> Bagikan
           </button>
           <button type="button" className="apply-button" disabled={isJobExpired} onClick={() => startApplication(selectedJob)}>
             {isJobExpired ? "Pendaftaran Ditutup" : "Lamar Sekarang"}
