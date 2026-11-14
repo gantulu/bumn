@@ -1068,7 +1068,8 @@ function AppContent() {
           <AuthFlow
             onAuthenticated={(user) => {
               setCurrentUser(user);
-              navigate("/profil", { replace: true });
+              const returnTo = (location.state as { from?: string } | null)?.from;
+              navigate(returnTo?.startsWith("/lamar/") ? returnTo : "/profil", { replace: true });
             }}
           />
         )}
