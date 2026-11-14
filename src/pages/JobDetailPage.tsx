@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bookmark, Building2, CalendarDays, CheckCircle2, MapPin, Share2 } from "lucide-react";
+import { Bookmark, Building2, CalendarDays, MapPin, Share2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Job } from "../types/job";
 
