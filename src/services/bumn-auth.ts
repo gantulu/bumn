@@ -73,3 +73,39 @@ export async function loginBumnUser(input: {
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
   return result.data.user;
 }
+
+export type StoredBumnCredentials = {
+  phone: string;
+  password: string;
+};
+
+export const BUMN_AUTH_STORAGE_KEY = "bumn_auth_credentials";
+
+export function saveBumnCredentials(credentials: StoredBumnCredentials): void {
+  localStorage.setItem(BUMN_AUTH_STORAGE_KEY, JSON.stringify(credentials));
+}
+
+export function readBumnCredentials(): StoredBumnCredentials | null {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(BUMN_AUTH_STORAGE_KEY) ?? "null");
+    if (
+      value &&
+      typeof value === "object" &&
+      "phone" in value &&
+      "password" in value &&
+      typeof value.phone === "string" &&
+      typeof value.password === "string" &&
+      value.phone.length > 0 &&
+      value.password.length > 0
+    ) {
+      return { phone: value.phone, password: value.password };
+    }
+  } catch {
+    // Ignore malformed or unavailable local storage.
+  }
+  return null;
+}
+
+export function clearBumnCredentials(): void {
+  localStorage.removeItem(BUMN_AUTH_STORAGE_KEY);
+}
