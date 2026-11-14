@@ -841,14 +841,6 @@ function AppContent() {
           background: white; color: #253247; font-size: 13px;
         }
         .application-success { padding: 15px; border-radius: 10px; background: #eaf7ef; color: #17633b; font-size: 13px; line-height: 1.6; }
-        .detail-panel h2 { font-size: 20px; }
-        .detail-panel h3 { font-size: 14px; }
-        .detail-panel p, .detail-panel li {
-          font-size: 13px;
-          color: #64748b;
-          line-height: 1.7;
-        }
-        .detail-panel li { margin-bottom: 5px; }
         .apply-button {
           width: 100%;
           border: 0;
@@ -905,11 +897,7 @@ function AppContent() {
             <ArrowLeft size={21} />
           </button>
           <strong>Detail Lowongan</strong>
-          <button className="icon-button" type="button" aria-label="Bagikan lowongan" onClick={() => {
-            if (navigator.share) void navigator.share({ title: selectedJob.title, text: selectedJob.company, url: window.location.href });
-          }}>
-            <BriefcaseBusiness size={19} />
-          </button>
+          <span aria-hidden="true" style={{ width: 38, height: 38 }} />
         </header>
       ) : (
         <header className="header">
@@ -1281,7 +1269,7 @@ function AppContent() {
       </main>
 
       {/* BOTTOM NAVIGATION */}
-      {!applicationJob && <nav className="bottom-nav">
+      {!applicationJob && !selectedJob && <nav className="bottom-nav">
         {[
           { id: "home" as Tab, label: "Beranda", icon: Home },
           { id: "search" as Tab, label: "Cari Kerja", icon: Search },
