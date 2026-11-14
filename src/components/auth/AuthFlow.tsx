@@ -4,7 +4,9 @@ import {
   loginBumnUser,
   registerBumnUser,
   type BumnAuthUser,
-  saveBumnCredentials,\n  normalizeBumnPhone,\n  isValidBumnPhone,
+  saveBumnCredentials,
+  normalizeBumnPhone,
+  isValidBumnPhone,
 } from "../../services/bumn-auth";
 import PhoneStep from "./PhoneStep";
 import RegisterStep from "./RegisterStep";
