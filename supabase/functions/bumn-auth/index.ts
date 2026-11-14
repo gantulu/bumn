@@ -23,14 +23,14 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function normalizePhone(value: string): string {
-  const digits = value.replace(/\\D/g, "");
+  const digits = value.replace(/\D/g, "");
   if (digits.startsWith("0")) return `62${digits.slice(1)}`;
   if (digits.startsWith("8")) return `62${digits}`;
   return digits;
 }
 
 function isValidPhone(phone: string): boolean {
-  return /^62\\d{8,13}$/.test(phone);
+  return /^62\d{8,13}$/.test(phone);
 }
 
 function publicUser(user: Record<string, unknown>) {
@@ -60,7 +60,7 @@ function publicProfile(user: Record<string, unknown>) {
 }
 
 function isValidEmail(value: string): boolean {
-  return value.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+  return value.length <= 254 && /^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(value);
 }
 
 function getOwnedAvatarPath(avatarUrl: unknown, userId: string, supabaseUrl: string): string | null {
@@ -247,7 +247,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const birthDate = typeof input.birth_date === "string" && input.birth_date ? input.birth_date : null;
-      if (birthDate && (!/^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate) || Number.isNaN(Date.parse(`${birthDate}T00:00:00Z`)))) {
+      if (birthDate && (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(Date.parse(`${birthDate}T00:00:00Z`)))) {
         return jsonResponse({ success: false, message: "Tanggal lahir tidak valid." }, 400);
       }
 
