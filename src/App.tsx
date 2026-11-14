@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -39,124 +39,117 @@ type Job = {
   education: string;
   salary: string;
   deadline: string;
+  closingAt: string | null;
   description: string;
+  richTextDescription: string;
   qualifications: string[];
   imageUrl?: string;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
 };
 
-const jobs: Job[] = [
-  {
-    id: "LKG-001",
-    title: "Management Trainee",
-    company: "PT Pertamina (Persero)",
-    category: "Bisnis",
-    location: "Jakarta",
-    type: "Full Time",
-    education: "S1",
-    salary: "Kompetitif",
-    deadline: "30 November 2026",
-    description:
-      "Program pengembangan calon pemimpin masa depan melalui pelatihan dan pengalaman kerja lintas divisi.",
-    qualifications: [
-      "Pendidikan minimal S1",
-      "IPK minimal 3.00",
-      "Mampu berkomunikasi dengan baik",
-      "Memiliki kemampuan analisis",
-    ],
-  },
-  {
-    id: "LKG-002",
-    title: "IT Specialist",
-    company: "PT Telkom Indonesia",
-    category: "IT & Digital",
-    location: "Bandung",
-    type: "Full Time",
-    education: "S1",
-    salary: "Kompetitif",
-    deadline: "25 November 2026",
-    description:
-      "Mengembangkan dan memelihara sistem teknologi informasi serta infrastruktur digital perusahaan.",
-    qualifications: [
-      "S1 Teknik Informatika atau Sistem Informasi",
-      "Memahami pengembangan aplikasi",
-      "Menguasai teknologi database",
-      "Mampu bekerja dalam tim",
-    ],
-  },
-  {
-    id: "LKG-003",
-    title: "Staff Administrasi",
-    company: "PT Bank Mandiri (Persero) Tbk",
-    imageUrl: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=85",
-    category: "Administrasi",
-    location: "Jakarta Selatan",
-    type: "Full Time",
-    education: "D3 / S1",
-    salary: "Rp5–7 Juta",
-    deadline: "20 November 2026",
-    description:
-      "Bertanggung jawab mengelola administrasi, dokumentasi dan operasional kantor.",
-    qualifications: [
-      "Pendidikan minimal D3",
-      "Menguasai Microsoft Office",
-      "Teliti dan bertanggung jawab",
-    ],
-  },
-  {
-    id: "LKG-004",
-    title: "Electrical Engineer",
-    company: "PT PLN (Persero)",
-    category: "Teknik",
-    location: "Surabaya",
-    type: "Full Time",
-    education: "S1",
-    salary: "Kompetitif",
-    deadline: "15 Desember 2026",
-    description:
-      "Mendukung kegiatan operasional, pemeliharaan dan pengembangan sistem kelistrikan.",
-    qualifications: [
-      "S1 Teknik Elektro",
-      "Memahami sistem tenaga listrik",
-      "Mampu bekerja secara tim",
-    ],
-  },
-  {
-    id: "LKG-005",
-    title: "Finance Analyst",
-    company: "PT Bank Rakyat Indonesia",
-    category: "Keuangan",
-    location: "Jakarta",
-    type: "Full Time",
-    education: "S1",
-    salary: "Kompetitif",
-    deadline: "10 Desember 2026",
-    description:
-      "Melakukan analisis keuangan, laporan dan evaluasi kinerja bisnis.",
-    qualifications: [
-      "S1 Akuntansi atau Manajemen",
-      "Memahami analisis keuangan",
-      "Menguasai Microsoft Excel",
-    ],
-  },
-];
+type ApiJob = {
+  id: string;
+  title: string;
+  company: string;
+  category: string;
+  location: string;
+  employment_type: string;
+  education: string;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
+  description: string;
+  rich_text_description?: string | null;
+  qualifications: string[] | null;
+  closing_at: string | null;
+  cover_image_url?: string | null;
+};
 
-const categories = [
-  { name: "Semua", icon: BriefcaseBusiness },
-  { name: "IT & Digital", icon: Monitor },
-  { name: "Keuangan", icon: Calculator },
-  { name: "Teknik", icon: Settings },
-  { name: "Administrasi", icon: Users },
-  { name: "Bisnis", icon: Building2 },
-];
+type JobsApiResponse = {
+  success: boolean;
+  data: ApiJob[];
+  pagination?: {
+    count: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  };
+};
 
-const companies = [
-  "Pertamina",
-  "Bank Mandiri",
-  "Telkom Indonesia",
-  "PLN",
-  "BRI",
-  "KAI",
-];
+const JOBS_API_URL = "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/get-bumn-jobs";
+
+function formatSalary(min: number | null, max: number | null, currency: string): string {
+  if (min == null && max == null) return "Tidak dicantumkan";
+  const formatter = new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: currency || "IDR",
+    maximumFractionDigits: 0,
+  });
+  if (min != null && max != null) return `${formatter.format(min)} – ${formatter.format(max)}`;
+  if (min != null) return `Mulai ${formatter.format(min)}`;
+  return `Hingga ${formatter.format(max as number)}`;
+}
+
+function formatDeadline(value: string | null): string {
+  if (!value) return "Tidak dicantumkan";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "Tidak dicantumkan";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function mapApiJob(item: ApiJob): Job {
+  return {
+    id: item.id,
+    title: item.title,
+    company: item.company,
+    category: item.category,
+    location: item.location,
+    type: item.employment_type || "Tidak dicantumkan",
+    education: item.education || "Tidak dicantumkan",
+    salary: formatSalary(item.salary_min, item.salary_max, item.salary_currency || "IDR"),
+    deadline: formatDeadline(item.closing_at),
+    closingAt: item.closing_at,
+    description: item.description || "",
+    richTextDescription: item.rich_text_description || "",
+    qualifications: Array.isArray(item.qualifications) ? item.qualifications : [],
+    imageUrl: item.cover_image_url || undefined,
+    salary_min: item.salary_min,
+    salary_max: item.salary_max,
+    salary_currency: item.salary_currency || "IDR",
+  };
+}
+
+function sanitizeRichText(html: string): string {
+  if (!html || typeof DOMParser === "undefined") return "";
+  const parsed = new DOMParser().parseFromString(html, "text/html");
+  const allowedTags = new Set(["P", "B", "STRONG", "I", "EM", "UL", "OL", "LI", "BR"]);
+  const cleanNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+    if (node.nodeType !== Node.ELEMENT_NODE) return "";
+    const element = node as Element;
+    const children = Array.from(element.childNodes).map(cleanNode).join("");
+    if (!allowedTags.has(element.tagName)) return children;
+    const tag = element.tagName.toLowerCase();
+    return tag === "br" ? "<br>" : `<${tag}>${children}</${tag}>`;
+  };
+  return Array.from(parsed.body.childNodes).map(cleanNode).join("");
+}
+
+function getCategoryIcon(category: string) {
+  const value = category.toLowerCase();
+  if (value.includes("it") || value.includes("digital") || value.includes("technology")) return Monitor;
+  if (value.includes("finance") || value.includes("keuangan") || value.includes("account")) return Calculator;
+  if (value.includes("engineer") || value.includes("teknik")) return Settings;
+  if (value.includes("admin") || value.includes("human") || value.includes("hr")) return Users;
+  if (value.includes("management") || value.includes("bisnis")) return Building2;
+  return BriefcaseBusiness;
+}
 
 type Tab = "home" | "search" | "saved" | "profile";
 
@@ -219,6 +212,55 @@ function createPasswordSalt(): string {
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [jobsError, setJobsError] = useState("");
+  const [jobsRefreshKey, setJobsRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadJobs = async () => {
+      setIsLoadingJobs(true);
+      setJobsError("");
+      try {
+        const response = await fetch(JOBS_API_URL, {
+          method: "GET",
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(`Permintaan API gagal (HTTP ${response.status}).`);
+        const payload = await response.json() as JobsApiResponse;
+        if (!payload.success || !Array.isArray(payload.data)) {
+          throw new Error("Format respons API lowongan tidak sesuai.");
+        }
+        setJobs(payload.data.map(mapApiJob));
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          setJobsError(error.message || "Lowongan gagal dimuat. Silakan coba lagi.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoadingJobs(false);
+      }
+    };
+
+    void loadJobs();
+    return () => controller.abort();
+  }, [jobsRefreshKey]);
+
+  const categories = useMemo(() => [
+    { name: "Semua", icon: BriefcaseBusiness },
+    ...Array.from(new Set(jobs.map((job) => job.category).filter(Boolean)))
+      .sort((a, b) => a.localeCompare(b, "id"))
+      .map((name) => ({ name, icon: getCategoryIcon(name) })),
+  ], [jobs]);
+
+  const companies = useMemo(
+    () => Array.from(new Set(jobs.map((job) => job.company).filter(Boolean))),
+    [jobs],
+  );
+
   const isLoginPage = location.pathname === "/login";
   const isRegisterPage = location.pathname === "/daftar";
   const activeTab: Tab = location.pathname.startsWith("/lowongan")
@@ -232,7 +274,7 @@ function AppContent() {
   const isJobDetailPath = /^\/lowongan\/[^/]+$/.test(location.pathname);
   const isInvalidJobDetail = isJobDetailPath && !selectedJob;
   const [shareFeedback, setShareFeedback] = useState("");
-  const isJobExpired = selectedJob ? new Date(selectedJob.deadline).setHours(23, 59, 59, 999) < Date.now() : false;
+  const isJobExpired = selectedJob?.closingAt ? new Date(`${selectedJob.closingAt.slice(0, 10)}T23:59:59`).getTime() < Date.now() : false;
   const shareJob = async (job: Job) => {
     const shareData = { title: `${job.title} — ${job.company}`, text: `Informasi lowongan ${job.title} di ${job.company}`, url: window.location.href };
     try {
@@ -945,6 +987,21 @@ function AppContent() {
       )}
 
       <main className={`main-content ${selectedJob ? "detail-main" : ""}`}>
+        {isLoadingJobs && (
+          <div className="section" role="status">
+            <div className="notice">Memuat lowongan terbaru...</div>
+          </div>
+        )}
+        {jobsError && (
+          <div className="section" role="alert">
+            <div className="source-note">
+              {jobsError}
+              <button className="link-button" type="button" onClick={() => setJobsRefreshKey((value) => value + 1)}>
+                Coba lagi
+              </button>
+            </div>
+          </div>
+        )}
         {selectedJob && (
           <section className="detail-page-content">
             <div className="detail-hero">
@@ -986,7 +1043,11 @@ function AppContent() {
 
             <section className="detail-section">
               <h3>Deskripsi Pekerjaan</h3>
-              <p>{selectedJob.description}</p>
+              {selectedJob.richTextDescription ? (
+                <div dangerouslySetInnerHTML={{ __html: sanitizeRichText(selectedJob.richTextDescription) }} />
+              ) : (
+                <p>{selectedJob.description || "Deskripsi belum tersedia."}</p>
+              )}
             </section>
 
             <section className="detail-section">
