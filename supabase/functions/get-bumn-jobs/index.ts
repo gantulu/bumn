@@ -1,100 +1,98 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import {
+  createAdminClient,
+  createPublicClient,
+  jsonResponse,
+  optionsResponse,
+  originAllowed,
+  rateLimit,
+} from "../_shared/security.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+const COLUMNS = [
+  "id", "title", "company", "category", "location", "employment_type",
+  "education", "salary_min", "salary_max", "salary_currency", "description",
+  "rich_text_description", "qualifications", "closing_at", "cover_image_url",
+  "created_at", "updated_at", "source_url", "verification_status",
+  "publication_status", "is_sample", "published_at",
+].join(",");
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
-  });
+function parseInteger(value: string | null, fallback: number): number | null {
+  if (value === null) return fallback;
+  if (!/^(0|[1-9]\d*)$/.test(value)) return null;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return optionsResponse(req);
+  if (!originAllowed(req)) {
+    return jsonResponse(req, {
+      success: false,
+      error: { code: "ORIGIN_NOT_ALLOWED", message: "Origin is not allowed." },
+    }, 403);
   }
-
   if (req.method !== "GET") {
-    return jsonResponse(
-      { success: false, error: { code: "METHOD_NOT_ALLOWED", message: "Only GET is supported." } },
-      405,
-    );
+    return jsonResponse(req, {
+      success: false,
+      error: { code: "METHOD_NOT_ALLOWED", message: "Only GET is supported." },
+    }, 405);
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-
-    if (!supabaseUrl || !anonKey) {
-      console.error("Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
-      return jsonResponse(
-        { success: false, error: { code: "SERVER_CONFIGURATION_ERROR", message: "Server configuration error." } },
-        500,
-      );
+    const admin = createAdminClient();
+    if (!await rateLimit(admin, req, "jobs-list", 120, 60)) {
+      return jsonResponse(req, {
+        success: false,
+        error: { code: "RATE_LIMITED", message: "Terlalu banyak permintaan. Coba lagi sebentar." },
+      }, 429);
     }
 
     const url = new URL(req.url);
-    const requestedLimit = Number(url.searchParams.get("limit") ?? "50");
-    const requestedOffset = Number(url.searchParams.get("offset") ?? "0");
-
-    if (!Number.isInteger(requestedLimit) || requestedLimit < 1 || requestedLimit > 100) {
-      return jsonResponse(
-        { success: false, error: { code: "INVALID_LIMIT", message: "limit must be an integer between 1 and 100." } },
-        400,
-      );
+    const limit = parseInteger(url.searchParams.get("limit"), 50);
+    const offset = parseInteger(url.searchParams.get("offset"), 0);
+    if (limit === null || limit < 1 || limit > 100) {
+      return jsonResponse(req, {
+        success: false,
+        error: { code: "INVALID_LIMIT", message: "limit harus berupa integer antara 1 dan 100." },
+      }, 400);
+    }
+    if (offset === null || offset < 0 || offset > 1_000_000) {
+      return jsonResponse(req, {
+        success: false,
+        error: { code: "INVALID_OFFSET", message: "offset harus berupa integer antara 0 dan 1000000." },
+      }, 400);
     }
 
-    if (!Number.isInteger(requestedOffset) || requestedOffset < 0) {
-      return jsonResponse(
-        { success: false, error: { code: "INVALID_OFFSET", message: "offset must be a non-negative integer." } },
-        400,
-      );
-    }
-
-    const supabase = createClient(supabaseUrl, anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
-    const columns = [
-      "id", "title", "company", "category", "location", "employment_type",
-      "education", "salary_min", "salary_max", "salary_currency", "description",
-      "rich_text_description", "qualifications", "closing_at", "cover_image_url",
-      "created_at", "updated_at",
-    ].join(", ");
-
-    const { data, error, count } = await supabase
-      .from("bumn_jobs")
-      .select(columns, { count: "exact" })
+    const db = createPublicClient();
+    const { data, error, count } = await db.from("bumn_jobs")
+      .select(COLUMNS, { count: "exact" })
+      .eq("publication_status", "published")
       .order("created_at", { ascending: false })
-      .range(requestedOffset, requestedOffset + requestedLimit - 1);
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error("get-bumn-jobs query failed:", error.message);
-      return jsonResponse(
-        { success: false, error: { code: "QUERY_FAILED", message: "Unable to retrieve job listings." } },
-        500,
-      );
+      return jsonResponse(req, {
+        success: false,
+        error: { code: "QUERY_FAILED", message: "Unable to retrieve job listings." },
+      }, 500);
     }
 
-    return jsonResponse({
+    const rows = data ?? [];
+    return jsonResponse(req, {
       success: true,
-      data: data ?? [],
+      data: rows,
       pagination: {
         count: count ?? 0,
-        limit: requestedLimit,
-        offset: requestedOffset,
-        has_more: requestedOffset + (data?.length ?? 0) < (count ?? 0),
+        limit,
+        offset,
+        has_more: offset + rows.length < (count ?? 0),
       },
     });
   } catch (error) {
-    console.error("get-bumn-jobs unexpected error:", error);
-    return jsonResponse(
-      { success: false, error: { code: "INTERNAL_SERVER_ERROR", message: "Internal server error." } },
-      500,
-    );
+    console.error("get-bumn-jobs error:", error instanceof Error ? error.message : "unknown");
+    return jsonResponse(req, {
+      success: false,
+      error: { code: "INTERNAL_SERVER_ERROR", message: "Internal server error." },
+    }, 500);
   }
 });
