@@ -213,7 +213,7 @@ function AppContent() {
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
         try {
-          if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+          
             const supabase = createClient();
             const { data, error: dbError } = await supabase
               .from("bumn_jobs")
@@ -1363,7 +1363,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/*" element={<AppContent />} />
       </Routes>
