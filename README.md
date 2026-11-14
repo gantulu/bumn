@@ -20,10 +20,10 @@ npm run preview
 - `src/features`: home, search, saved jobs, profile.
 - `src/data`: demonstrasi data lowongan.
 - `src/hooks`: reusable state hooks.
-- `src/services`: data/API adapter.
+- `src/services`: repository adapter untuk data lowongan.
 - `src/types`: shared TypeScript contracts.
 
-Data lowongan saat ini adalah data demonstrasi, bukan pengumuman rekrutmen resmi. Adapter API siap dikonfigurasi melalui `VITE_API_BASE_URL` setelah backend dan kontraknya tersedia.
+Data lowongan saat ini adalah data demonstrasi, bukan pengumuman rekrutmen resmi. Adapter backend bersifat provisional: jika `VITE_API_BASE_URL` diatur, aplikasi mengharapkan `GET {VITE_API_BASE_URL}/jobs` mengembalikan array sesuai tipe `Job`. Kontrak ini harus dikonfirmasi dengan backend sebelum dipakai di production.
 
 ## GitHub Pages
 Repository Pages menggunakan base path `/bumn/`. Workflow deploy berjalan saat ada push ke `main`. Pada **Settings → Pages → Build and deployment**, pilih **GitHub Actions**.
