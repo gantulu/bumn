@@ -1,3 +1,5 @@
+import { fetchEdgeFunction, getEdgeFunctionUrl } from "../lib/supabase/functions";
+
 export type BumnAuthUser = {
   id: string;
   full_name: string;
@@ -61,12 +63,10 @@ export type StoredBumnCredentials = {
   password?: string;
 };
 
-const BUMN_AUTH_URL =
-  "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/bumn-auth";
 export const BUMN_AUTH_STORAGE_KEY = "bumn_auth_credentials";
 
 async function requestAuth(payload: Record<string, unknown>): Promise<AuthResponse> {
-  const response = await fetch(BUMN_AUTH_URL, {
+  const response = await fetchEdgeFunction("bumn-auth", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(payload),
@@ -180,7 +180,7 @@ export async function uploadAvatar(file: File): Promise<string> {
   formData.append("session_token", session.session_token!);
   formData.append("file", file);
 
-  const response = await fetch(BUMN_AUTH_URL, {
+  const response = await fetchEdgeFunction("bumn-auth", {
     method: "POST",
     headers: { Accept: "application/json" },
     body: formData,
@@ -232,7 +232,7 @@ export function clearBumnCredentials(): void {
   try {
     const session = readBumnCredentials();
     if (session?.session_token) {
-      void fetch(BUMN_AUTH_URL, {
+      void fetch(getEdgeFunctionUrl("bumn-auth"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ action: "logout", session_token: session.session_token }),

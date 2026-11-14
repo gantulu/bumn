@@ -8,7 +8,7 @@ Backend custom-authentication untuk portal lowongan dan lamaran BUMN.
 - `functions/get-bumn-jobs`: API publik untuk lowongan yang berstatus `published`.
 - `functions/bumn-auth`: register, login, session, profil, dan avatar.
 - `functions/bumn-lamar`: draft, pengelolaan lamaran, dokumen privat, submit, dan withdraw.
-- `functions/_shared/security.ts`: CORS, session, rate limit, dan helper Supabase.
+- Setiap Edge Function bersifat mandiri (self-contained) tanpa folder `_shared`.
 
 ## Tabel inti
 
@@ -107,7 +107,7 @@ Persyaratan kualifikasi non-pendidikan pada `bumn_jobs.qualifications` tetap dis
 
 Deploy ketiga fungsi dengan `verify_jwt=false` karena autentikasi aplikasi diverifikasi oleh custom session middleware. Jangan mengaktifkan JWT gateway tanpa migrasi kontrak client.
 
-Saat deploy melalui Supabase Dashboard/CLI, sertakan file `../_shared/security.ts` sebagai dependency untuk masing-masing Edge Function.
+Masing-masing Edge Function sudah mandiri (helper CORS, session, dan rate limit berada di dalam `index.ts` masing-masing) sehingga dapat di-deploy langsung melalui Supabase Dashboard maupun CLI tanpa dependensi `_shared`.
 
 ## Operational verification
 

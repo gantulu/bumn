@@ -4,8 +4,9 @@ import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-route
 import AuthFlow from "./components/auth/AuthFlow";
 import ProfilePage from "./components/profile/ProfilePage";
 import ApplicationPage from "./components/ApplicationPage";
-import ComponentShowcase from "./pages/ComponentShowcase";
 import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
+import { createClient } from "./lib/supabase/client";
+import { fetchEdgeFunction } from "./lib/supabase/functions";
 import {
   Home,
   Search,
@@ -82,7 +83,12 @@ type JobsApiResponse = {
   };
 };
 
-const JOBS_API_URL = "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/get-bumn-jobs";
+const JOB_COLUMNS = [
+  "id", "title", "company", "category", "location", "employment_type",
+  "education", "salary_min", "salary_max", "salary_currency", "description",
+  "rich_text_description", "qualifications", "closing_at", "cover_image_url",
+  "created_at", "updated_at",
+].join(",");
 
 function formatSalary(min: number | null, max: number | null, currency: string): string {
   if (min == null && max == null) return "Tidak dicantumkan";
@@ -192,7 +198,7 @@ function AppContent() {
       setIsLoadingJobs(true);
       setJobsError("");
       try {
-        const response = await fetch(JOBS_API_URL, {
+        const response = await fetchEdgeFunction("get-bumn-jobs", {
           method: "GET",
           headers: { Accept: "application/json" },
           signal: controller.signal,
@@ -205,7 +211,25 @@ function AppContent() {
         }
         setJobs(payload.data.map(mapApiJob));
       } catch (error) {
-        if (error instanceof Error && error.name !== "AbortError") {
+        if (error instanceof Error && error.name === "AbortError") return;
+        try {
+          if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+            const supabase = createClient();
+            const { data, error: dbError } = await supabase
+              .from("bumn_jobs")
+              .select(JOB_COLUMNS)
+              .eq("publication_status", "published")
+              .order("created_at", { ascending: false })
+              .limit(50);
+            if (!dbError && Array.isArray(data)) {
+              setJobs((data as unknown as ApiJob[]).map(mapApiJob));
+              return;
+            }
+          }
+        } catch {
+          // Fall back to showing original API error message.
+        }
+        if (error instanceof Error) {
           setJobsError(error.message || "Lowongan gagal dimuat. Silakan coba lagi.");
         }
       } finally {
@@ -1341,7 +1365,6 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/ui-kit" element={<ComponentShowcase />} />
         <Route path="/*" element={<AppContent />} />
       </Routes>
     </HashRouter>

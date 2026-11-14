@@ -1,6 +1,6 @@
 import { readBumnCredentials } from "./bumn-auth";
+import { fetchEdgeFunction } from "../lib/supabase/functions";
 
-const URL_API = "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/bumn-lamar";
 export type ApplicationStatus = "draft" | "submitted" | "reviewing" | "shortlisted" | "rejected" | "accepted" | "withdrawn";
 export type ApplicationDocumentType = "diploma" | "high_school_diploma" | "identity_card";
 
@@ -76,7 +76,7 @@ function sessionToken(): string {
 
 async function post<T>(payload: Record<string, unknown>): Promise<Response<T>> {
   const token = sessionToken();
-  const response = await fetch(URL_API, {
+  const response = await fetchEdgeFunction("bumn-lamar", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -137,7 +137,7 @@ export async function uploadApplicationDocument(
   form.append("document_type", type);
   form.append("file", file);
 
-  const response = await fetch(URL_API, {
+  const response = await fetchEdgeFunction("bumn-lamar", {
     method: "POST",
     headers: { Accept: "application/json" },
     body: form,
