@@ -28,10 +28,16 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
 
   const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const normalizedPhone = normalizeBumnPhone(phone);
+    if (!isValidBumnPhone(normalizedPhone)) {
+      setError("Nomor telepon tidak valid. Gunakan nomor Indonesia, contoh 081234567890.");
+      return;
+    }
+    setPhone(normalizedPhone);
     setLoading(true);
     setError("");
     try {
-      const exists = await checkPhone(phone.trim());
+      const exists = await checkPhone(normalizedPhone);
       setStep(exists ? "login" : "register");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nomor telepon gagal diperiksa.");
@@ -72,7 +78,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     setError("");
     try {
       const user = await loginBumnUser({ phone: normalizeBumnPhone(phone), password });
-      saveBumnCredentials({ phone: phone.trim(), password });
+      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       onAuthenticated(user);
     } catch (err) {
