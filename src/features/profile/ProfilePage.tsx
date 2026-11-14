@@ -1,0 +1,3 @@
+import { ChevronRight,User } from "lucide-react";
+const rows=["Data Pribadi","Riwayat Pendidikan","Pengalaman Kerja","Lamaran Saya","Pengaturan"];
+export function ProfilePage(){return <><section className="page-header"><div><h2>Profil Pengguna</h2><div className="page-description">Kelola informasi akun dan lamaranmu.</div></div></section><div className="profile-card"><div className="profile-avatar"><User size={32}/></div><h3>Selamat Datang!</h3><p>Fitur akun tersedia setelah layanan autentikasi terhubung.</p><button className="apply-button" type="button" disabled>Login / Daftar belum tersedia</button></div><section className="section section-end">{rows.map(row=><div className="profile-row" key={row}>{row}<ChevronRight size={17}/></div>)}</section></>;}
