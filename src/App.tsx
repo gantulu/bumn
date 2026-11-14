@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav } from "./components/layout/BottomNav";
 import { Header } from "./components/layout/Header";
-import { jobs } from "./data/jobs";
+
 import { ApplicationPage } from "./pages/ApplicationPage";
 import { HomePage } from "./pages/HomePage";
 import { JobDetailPage } from "./pages/JobDetailPage";
@@ -11,11 +11,13 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { SavedJobsPage } from "./pages/SavedJobsPage";
 import { SearchPage } from "./pages/SearchPage";
 import { readSavedJobs, writeSavedJobs } from "./services/storageService";
+import { useJobs } from "./hooks/useJobs";
 import type { AppTab, Job } from "./types/job";
 
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { jobs, loading, error } = useJobs();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("Semua");
   const [savedIds, setSavedIds] = useState<string[]>(readSavedJobs);
@@ -76,6 +78,17 @@ function AppContent() {
     <div className="app-container">
       <Header isDetail={isDetailPage} onBack={goBackFromDetail} />
       <main className={"main-content " + (isDetailPage ? "detail-main" : "")}>
+        {loading ? (
+          <section className="loading-state" role="status">Memuat informasi lowongan...</section>
+        ) : error ? (
+          <section className="detail-page-content">
+            <div className="detail-section" role="alert">
+              <h2>Lowongan belum dapat dimuat</h2>
+              <p>{error}</p>
+              <p>Silakan muat ulang halaman untuk mencoba kembali.</p>
+            </div>
+          </section>
+        ) : (
         <Routes>
           <Route path="/" element={<HomePage jobs={jobs} savedIds={savedIds} searchQuery={search}
             onSearchChange={setSearch}
@@ -92,6 +105,7 @@ function AppContent() {
           <Route path="/lamar/:id" element={<ApplicationPage jobs={jobs} />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        )}
       </main>
       {!isDetailPage && !isApplicationPage && <BottomNav activeTab={activeTab} onChange={changeTab} />}
     </div>
