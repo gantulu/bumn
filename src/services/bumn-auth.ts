@@ -37,14 +37,14 @@ async function requestAuth(payload: Record<string, string>): Promise<AuthRespons
 }
 
 export function normalizeBumnPhone(value: string): string {
-  const digits = value.replace(/\\D/g, "");
+  const digits = value.replace(/\D/g, "");
   if (digits.startsWith("0")) return `62${digits.slice(1)}`;
   if (digits.startsWith("8")) return `62${digits}`;
   return digits;
 }
 
 export function isValidBumnPhone(value: string): boolean {
-  return /^62\\d{8,13}$/.test(normalizeBumnPhone(value));
+  return /^62\d{8,13}$/.test(normalizeBumnPhone(value));
 }
 
 export async function checkPhone(phone: string): Promise<boolean> {
@@ -65,7 +65,7 @@ export async function registerBumnUser(input: {
     action: "register",
     full_name: input.full_name,
     phone: input.phone,
-    email: input.email ?? "",
+    ...(input.email?.trim() ? { email: input.email.trim() } : {}),
     password: input.password,
   });
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
