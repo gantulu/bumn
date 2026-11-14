@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import AuthFlow from "./components/auth/AuthFlow";
-import type { BumnAuthUser } from "./services/bumn-auth";
+import { clearBumnCredentials, loginBumnUser, readBumnCredentials, type BumnAuthUser } from "./services/bumn-auth";
 import {
   Home,
   Search,
@@ -276,12 +276,36 @@ function AppContent() {
   const [category, setCategory] = useState("Semua");
   const [saved, setSaved] = useState<string[]>(() => readSavedJobs());
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isRestoringAuth, setIsRestoringAuth] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const credentials = readBumnCredentials();
+    if (!credentials) {
+      setIsRestoringAuth(false);
+      return;
+    }
+
+    void loginBumnUser(credentials)
+      .then((user) => {
+        if (active) setCurrentUser(user);
+      })
+      .catch(() => {
+        // Keep credentials on temporary network/API failures; user can retry login.
+      })
+      .finally(() => {
+        if (active) setIsRestoringAuth(false);
+      });
+
+    return () => { active = false; };
+  }, []);
   const [applicationName, setApplicationName] = useState("");
   const [applicationEmail, setApplicationEmail] = useState("");
   const [applicationPhone, setApplicationPhone] = useState("");
   const [applicationEducation, setApplicationEducation] = useState("");
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const handleLogout = () => {
+    clearBumnCredentials();
     setCurrentUser(null);
     navigate("/", { replace: true });
   };
