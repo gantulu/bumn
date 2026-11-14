@@ -130,7 +130,7 @@ function sanitizeRichText(html: string): string {
   const parsed = new DOMParser().parseFromString(html, "text/html");
   const allowedTags = new Set(["P", "B", "STRONG", "I", "EM", "UL", "OL", "LI", "BR"]);
   const cleanNode = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) return node.textContent || "";
+    if (node.nodeType === Node.TEXT_NODE) return (node.textContent || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     if (node.nodeType !== Node.ELEMENT_NODE) return "";
     const element = node as Element;
     const children = Array.from(element.childNodes).map(cleanNode).join("");
@@ -272,7 +272,7 @@ function AppContent() {
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
   const isJobDetailPath = /^\/lowongan\/[^/]+$/.test(location.pathname);
-  const isInvalidJobDetail = isJobDetailPath && !selectedJob;
+  const isInvalidJobDetail = isJobDetailPath && !selectedJob && !isLoadingJobs && !jobsError;
   const [shareFeedback, setShareFeedback] = useState("");
   const isJobExpired = selectedJob?.closingAt ? new Date(`${selectedJob.closingAt.slice(0, 10)}T23:59:59`).getTime() < Date.now() : false;
   const shareJob = async (job: Job) => {
@@ -1015,7 +1015,7 @@ function AppContent() {
                 <span><GraduationCap size={14} style={{ display: "inline", verticalAlign: "middle" }} /> {selectedJob.education}</span>
               </div>
               <div className="source-note" style={{ marginTop: 15 }} role="note">
-                <CheckCircle2 size={15} style={{ display: "inline", verticalAlign: "middle" }} /> Data contoh aplikasi. Status perusahaan dan lowongan belum diverifikasi sebagai pengumuman resmi.
+                <CheckCircle2 size={15} style={{ display: "inline", verticalAlign: "middle" }} /> Informasi ditampilkan berdasarkan data API. Konfirmasi status rekrutmen melalui kanal karier resmi perusahaan.
               </div>
             </div>
 
