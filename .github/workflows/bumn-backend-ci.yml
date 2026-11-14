@@ -1,0 +1,29 @@
+name: BUMN Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, backend-final-v1]
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+
+  edge-functions-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/get-bumn-jobs/index.ts
+      - run: deno check supabase/functions/bumn-auth/index.ts
+      - run: deno check supabase/functions/bumn-lamar/index.ts
