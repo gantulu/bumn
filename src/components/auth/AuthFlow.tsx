@@ -4,7 +4,6 @@ import {
   loginBumnUser,
   registerBumnUser,
   type BumnAuthUser,
-  saveBumnCredentials,
   normalizeBumnPhone,
   isValidBumnPhone,
 } from "../../services/bumn-auth";
@@ -77,7 +76,6 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
         email: email.trim(),
         password,
       });
-      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       setConfirmPassword("");
       onAuthenticated(user);
@@ -101,7 +99,6 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     setError("");
     try {
       const user = await loginBumnUser({ phone: normalizeBumnPhone(phone), password });
-      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       onAuthenticated(user);
     } catch (err) {
