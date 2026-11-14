@@ -1298,62 +1298,65 @@ function AppContent() {
           </>
         )}
 
-        {!selectedJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
+        {!selectedJob && !applicationJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
           <>
             <section className="page-header">
               <div>
                 <h2>Profil Pengguna</h2>
                 <div className="page-description">
-                  Kelola informasi akun dan lamaranmu.
+                  {currentUser ? "Informasi akun BUMN Career." : "Masuk atau buat akun untuk melanjutkan."}
                 </div>
               </div>
             </section>
-            <div className="profile-card">
-              <div className="profile-avatar">
-                <User size={32} />
-              </div>
-              <h3>{currentUser ? currentUser.full_name : "Selamat Datang!"}</h3>
-              <p>{currentUser ? currentUser.email : "Masuk untuk mengelola profil dan lamaran pekerjaan."}</p>
-              {currentUser ? (
-                <button className="apply-button" onClick={handleLogout}>
-                  <LogOut size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Keluar
-                </button>
-              ) : (
-                <>
-                  <button className="apply-button" onClick={() => navigate("/login")}>
-                    <LogIn size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Login
+            {currentUser ? (
+              <>
+                <section className="profile-card">
+                  <div className="profile-avatar">
+                    {currentUser.avatar ? (
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.full_name}
+                        style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <User size={32} />
+                    )}
+                  </div>
+                  <h3>{currentUser.full_name}</h3>
+                  <p style={{ margin: "6px 0", color: "#64748b" }}>{currentUser.phone}</p>
+                  <p style={{ margin: "6px 0 0", color: "#8290a0" }}>
+                    {currentUser.email || "Email belum ditambahkan"}
+                  </p>
+                </section>
+                <section className="section" style={{ paddingBottom: 24 }}>
+                  <div className="detail-section">
+                    <h3>Informasi Akun</h3>
+                    <div className="detail-fact">
+                      <span>Nama lengkap</span>
+                      <strong>{currentUser.full_name}</strong>
+                    </div>
+                    <div className="detail-fact" style={{ marginTop: 10 }}>
+                      <span>Nomor telepon</span>
+                      <strong>{currentUser.phone}</strong>
+                    </div>
+                    <div className="detail-fact" style={{ marginTop: 10 }}>
+                      <span>Email</span>
+                      <strong>{currentUser.email || "Belum ditambahkan"}</strong>
+                    </div>
+                  </div>
+                  <button className="apply-button" type="button" onClick={handleLogout}>
+                    <LogOut size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Keluar
                   </button>
-                  <button className="auth-secondary" onClick={() => navigate("/daftar")}>
-                    <UserPlus size={16} style={{ display: "inline", verticalAlign: "middle" }} /> Daftar Akun
-                  </button>
-                </>
-              )}
-            </div>
-            <section className="section">
-              {[
-                "Data Pribadi",
-                "Riwayat Pendidikan",
-                "Pengalaman Kerja",
-                "Lamaran Saya",
-                "Pengaturan",
-              ].map((item) => (
-                <div
-                  key={item}
-                  style={{
-                    background: "white",
-                    padding: 17,
-                    borderRadius: 10,
-                    marginBottom: 9,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 13,
-                  }}
-                >
-                  {item}
-                  <ChevronRight size={17} color="#8290a0" />
-                </div>
-              ))}
-            </section>
+                </section>
+              </>
+            ) : (
+              <AuthFlow
+                onAuthenticated={(user) => {
+                  setCurrentUser(user);
+                  navigate("/profil", { replace: true });
+                }}
+              />
+            )}
           </>
         )}
       </main>
