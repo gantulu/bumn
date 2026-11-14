@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   checkPhone,
   loginBumnUser,
@@ -19,6 +19,7 @@ type AuthFlowProps = {
 type AuthStep = "phone" | "register" | "login";
 
 export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
+  const requestInProgress = useRef(false);
   const [step, setStep] = useState<AuthStep>("phone");
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
@@ -30,11 +31,13 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
 
   const handlePhoneSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (requestInProgress.current) return;
     const normalizedPhone = normalizeBumnPhone(phone);
     if (!isValidBumnPhone(normalizedPhone)) {
       setError("Nomor telepon tidak valid. Gunakan nomor Indonesia, contoh 081234567890.");
       return;
     }
+    requestInProgress.current = true;
     setPhone(normalizedPhone);
     setLoading(true);
     setError("");
@@ -44,17 +47,28 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Nomor telepon gagal diperiksa.");
     } finally {
+      requestInProgress.current = false;
       setLoading(false);
     }
   };
 
   const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (requestInProgress.current) return;
     setError("");
+    if (!fullName.trim()) {
+      setError("Nama lengkap wajib diisi.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password minimal 8 karakter.");
+      return;
+    }
     if (password !== confirmPassword) {
       setError("Konfirmasi password tidak sesuai.");
       return;
     }
+    requestInProgress.current = true;
     setLoading(true);
     try {
       const user = await registerBumnUser({
@@ -70,12 +84,19 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Pendaftaran gagal.");
     } finally {
+      requestInProgress.current = false;
       setLoading(false);
     }
   };
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (requestInProgress.current) return;
+    if (!password) {
+      setError("Password wajib diisi.");
+      return;
+    }
+    requestInProgress.current = true;
     setLoading(true);
     setError("");
     try {
@@ -86,6 +107,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login gagal.");
     } finally {
+      requestInProgress.current = false;
       setLoading(false);
     }
   };
