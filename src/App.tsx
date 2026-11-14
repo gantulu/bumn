@@ -23,8 +23,6 @@ import {
   SlidersHorizontal,
   X,
   CheckCircle2,
-  LogIn,
-  UserPlus,
   LogOut,
   Share2,
 } from "lucide-react";
