@@ -31,33 +31,39 @@ type AuthResponse = {
     exists?: boolean;
     user?: BumnAuthUser | BumnProfile;
     avatar?: string | null;
+    session_token?: string;
+    expires_at?: string;
   };
+};
+
+export type StoredBumnCredentials = {
+  phone: string;
+  session_token?: string;
+  /** Legacy field is read only for one-time migration to a server session. */
+  password?: string;
 };
 
 const BUMN_AUTH_URL =
   "https://zyiavfljweavoxyyplxj.supabase.co/functions/v1/bumn-auth";
+export const BUMN_AUTH_STORAGE_KEY = "bumn_auth_credentials";
 
 async function requestAuth(payload: Record<string, unknown>): Promise<AuthResponse> {
   const response = await fetch(BUMN_AUTH_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify(payload),
   });
-
-  const result = (await response.json()) as AuthResponse;
+  const result = await response.json() as AuthResponse;
   if (!response.ok || !result.success) {
     throw new Error(result.message || `Permintaan gagal (HTTP ${response.status}).`);
   }
   return result;
 }
 
-function getStoredCredentials(): StoredBumnCredentials {
-  const credentials = readBumnCredentials();
-  if (!credentials) throw new Error("Sesi login tidak ditemukan. Silakan masuk kembali.");
-  return credentials;
+function persistSession(phone: string, result: AuthResponse): void {
+  const token = result.data?.session_token;
+  if (!token) throw new Error("Token sesi tidak ditemukan pada respons server.");
+  saveBumnCredentials({ phone, session_token: token });
 }
 
 export function normalizeBumnPhone(value: string): string {
@@ -85,40 +91,64 @@ export async function registerBumnUser(input: {
   email?: string;
   password: string;
 }): Promise<BumnAuthUser> {
+  const phone = normalizeBumnPhone(input.phone);
   const result = await requestAuth({
     action: "register",
     full_name: input.full_name,
-    phone: input.phone,
+    phone,
     ...(input.email?.trim() ? { email: input.email.trim() } : {}),
     password: input.password,
   });
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
+  persistSession(phone, result);
   return result.data.user as BumnAuthUser;
 }
 
 export async function loginBumnUser(input: {
   phone: string;
-  password: string;
+  password?: string;
+  session_token?: string;
 }): Promise<BumnAuthUser> {
+  if (input.session_token) {
+    const result = await requestAuth({
+      action: "get-profile",
+      session_token: input.session_token,
+    });
+    if (!result.data?.user) throw new Error("Data sesi tidak ditemukan pada respons server.");
+    return result.data.user as BumnAuthUser;
+  }
+
+  if (!input.password) throw new Error("Sesi login tidak ditemukan. Silakan masuk kembali.");
+  const phone = normalizeBumnPhone(input.phone);
   const result = await requestAuth({
     action: "login",
-    phone: input.phone,
+    phone,
     password: input.password,
   });
   if (!result.data?.user) throw new Error("Data akun tidak ditemukan pada respons server.");
+  persistSession(phone, result);
   return result.data.user as BumnAuthUser;
 }
 
+function getStoredSession(): StoredBumnCredentials {
+  const credentials = readBumnCredentials();
+  if (!credentials) throw new Error("Sesi login tidak ditemukan. Silakan masuk kembali.");
+  if (!credentials.session_token) throw new Error("Sesi login kedaluwarsa. Silakan masuk kembali.");
+  return credentials;
+}
+
 export async function getProfile(): Promise<BumnProfile> {
-  const result = await requestAuth({ action: "get-profile", ...getStoredCredentials() });
+  const session = getStoredSession();
+  const result = await requestAuth({ action: "get-profile", session_token: session.session_token });
   if (!result.data?.user) throw new Error("Data profil tidak ditemukan pada respons server.");
   return result.data.user as BumnProfile;
 }
 
 export async function updateProfile(profile: BumnProfileInput): Promise<BumnProfile> {
+  const session = getStoredSession();
   const result = await requestAuth({
     action: "update-profile",
-    ...getStoredCredentials(),
+    session_token: session.session_token,
     profile,
   });
   if (!result.data?.user) throw new Error("Data profil tidak ditemukan pada respons server.");
@@ -126,11 +156,10 @@ export async function updateProfile(profile: BumnProfileInput): Promise<BumnProf
 }
 
 export async function uploadAvatar(file: File): Promise<string> {
-  const credentials = getStoredCredentials();
+  const session = getStoredSession();
   const formData = new FormData();
   formData.append("action", "upload-avatar");
-  formData.append("phone", credentials.phone);
-  formData.append("password", credentials.password);
+  formData.append("session_token", session.session_token!);
   formData.append("file", file);
 
   const response = await fetch(BUMN_AUTH_URL, {
@@ -138,7 +167,7 @@ export async function uploadAvatar(file: File): Promise<string> {
     headers: { Accept: "application/json" },
     body: formData,
   });
-  const result = (await response.json()) as AuthResponse;
+  const result = await response.json() as AuthResponse;
   if (!response.ok || !result.success || typeof result.data?.avatar !== "string") {
     throw new Error(result.message || `Upload avatar gagal (HTTP ${response.status}).`);
   }
@@ -146,38 +175,33 @@ export async function uploadAvatar(file: File): Promise<string> {
 }
 
 export async function deleteAvatar(): Promise<void> {
-  const result = await requestAuth({ action: "delete-avatar", ...getStoredCredentials() });
+  const session = getStoredSession();
+  const result = await requestAuth({ action: "delete-avatar", session_token: session.session_token });
   if (result.data?.avatar !== null) throw new Error("Respons penghapusan avatar tidak sesuai.");
 }
 
-export type StoredBumnCredentials = {
-  phone: string;
-  password: string;
-};
-
-export const BUMN_AUTH_STORAGE_KEY = "bumn_auth_credentials";
-
 export function saveBumnCredentials(credentials: StoredBumnCredentials): void {
+  if (!credentials.session_token) return;
   try {
-    localStorage.setItem(BUMN_AUTH_STORAGE_KEY, JSON.stringify(credentials));
+    localStorage.setItem(BUMN_AUTH_STORAGE_KEY, JSON.stringify({
+      phone: credentials.phone,
+      session_token: credentials.session_token,
+    }));
   } catch {
-    // Authentication can still complete for the current page session.
+    // The active page remains usable if browser storage is unavailable.
   }
 }
 
 export function readBumnCredentials(): StoredBumnCredentials | null {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(BUMN_AUTH_STORAGE_KEY) ?? "null");
-    if (
-      value &&
-      typeof value === "object" &&
-      "phone" in value &&
-      "password" in value &&
-      typeof value.phone === "string" &&
-      typeof value.password === "string" &&
-      value.phone.length > 0 &&
-      value.password.length > 0
-    ) {
+    if (!value || typeof value !== "object" || !("phone" in value) ||
+        typeof value.phone !== "string" || !value.phone) return null;
+    if ("session_token" in value && typeof value.session_token === "string" && value.session_token) {
+      return { phone: value.phone, session_token: value.session_token };
+    }
+    // One-time compatibility path: successful legacy login replaces the stored password with a token.
+    if ("password" in value && typeof value.password === "string" && value.password) {
       return { phone: value.phone, password: value.password };
     }
   } catch {
@@ -188,6 +212,15 @@ export function readBumnCredentials(): StoredBumnCredentials | null {
 
 export function clearBumnCredentials(): void {
   try {
+    const session = readBumnCredentials();
+    if (session?.session_token) {
+      void fetch(BUMN_AUTH_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ action: "logout", session_token: session.session_token }),
+        keepalive: true,
+      }).catch(() => undefined);
+    }
     localStorage.removeItem(BUMN_AUTH_STORAGE_KEY);
   } catch {
     // Ignore storage access errors during logout.
