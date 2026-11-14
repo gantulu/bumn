@@ -32,3 +32,5 @@
 .bumn-spin{animation:bumn-spin 1s linear infinite}
 @keyframes bumn-spin{to{transform:rotate(360deg)}}
 @media(max-width:560px){.bumn-profile-heading{align-items:flex-start}.bumn-profile-card:has(.bumn-profile-avatar){align-items:flex-start}.bumn-profile-avatar-actions{width:100%}.bumn-profile-grid{grid-template-columns:1fr}.bumn-profile-grid label.full{grid-column:auto}.bumn-profile-form-actions .bumn-profile-button{width:100%}}
+
+.bumn-profile-help{margin:-6px 0 14px;color:#718096;font-size:12px;line-height:1.6}.bumn-profile-grid textarea{line-height:1.5}.bumn-profile-grid textarea[spellcheck=false]{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:11px}
