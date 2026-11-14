@@ -25,7 +25,6 @@ import {
   SlidersHorizontal,
   X,
   CheckCircle2,
-  LogOut,
   Share2,
 } from "lucide-react";
 
