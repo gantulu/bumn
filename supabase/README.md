@@ -26,10 +26,12 @@ Tabel pendukung memakai RLS dan tidak diberikan akses langsung ke `anon` atau `a
 
 ## Secrets
 
-Edge Functions memerlukan secrets bawaan:
+Edge Functions memakai environment bawaan Supabase:
 - `SUPABASE_URL`
-- `SUPABASE_ANON_KEY` atau `SUPABASE_PUBLISHABLE_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_PUBLISHABLE_KEYS` (JSON map, key bernama `default`) untuk query publik.
+- `SUPABASE_SECRET_KEYS` (JSON map, key bernama `default`) untuk operasi admin.
+
+Helper masih menyediakan fallback kompatibilitas ke `SUPABASE_ANON_KEY` dan `SUPABASE_SERVICE_ROLE_KEY`. Jangan menambahkan key rahasia ke frontend atau repository.
 
 Optional:
 - `BUMN_ALLOWED_ORIGINS`: comma-separated origin allowlist. Default saat tidak diatur: `https://gantulu.github.io,http://localhost:5173,http://127.0.0.1:5173`.
