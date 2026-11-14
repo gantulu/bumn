@@ -4,7 +4,7 @@ import {
   loginBumnUser,
   registerBumnUser,
   type BumnAuthUser,
-  saveBumnCredentials,
+  saveBumnCredentials,\n  normalizeBumnPhone,\n  isValidBumnPhone,
 } from "../../services/bumn-auth";
 import PhoneStep from "./PhoneStep";
 import RegisterStep from "./RegisterStep";
@@ -51,11 +51,11 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     try {
       const user = await registerBumnUser({
         full_name: fullName.trim(),
-        phone: phone.trim(),
+        phone: normalizeBumnPhone(phone),
         email: email.trim(),
         password,
       });
-      saveBumnCredentials({ phone: phone.trim(), password });
+      saveBumnCredentials({ phone: user.phone, password });
       setPassword("");
       setConfirmPassword("");
       onAuthenticated(user);
@@ -71,7 +71,7 @@ export default function AuthFlow({ onAuthenticated }: AuthFlowProps) {
     setLoading(true);
     setError("");
     try {
-      const user = await loginBumnUser({ phone: phone.trim(), password });
+      const user = await loginBumnUser({ phone: normalizeBumnPhone(phone), password });
       saveBumnCredentials({ phone: phone.trim(), password });
       setPassword("");
       onAuthenticated(user);
