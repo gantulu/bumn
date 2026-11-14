@@ -147,6 +147,29 @@ function validateApplication(input: Body): Body {
   return output;
 }
 
+const EDUCATION_SNAPSHOT_MAP: Record<string, string> = { education_level: "level", education_institution: "institution", education_major: "major", education_degree: "degree", education_start_year: "start_year", education_graduation_year: "graduation_year", education_gpa: "gpa", education_description: "description" };
+const EXPERIENCE_SNAPSHOT_MAP: Record<string, string> = { experience_type: "type", experience_company: "company", experience_position: "position", experience_employment_type: "employment_type", experience_location: "location", experience_start_date: "start_date", experience_end_date: "end_date", experience_is_current: "is_current", experience_description: "description", experience_responsibilities: "responsibilities" };
+function snapshotForDraftUpdate(application: Body, updates: Body): Body {
+ const previous = isObject(application.cv_snapshot) ? application.cv_snapshot : {};
+ const previousIdentity = isObject(previous.identity) ? previous.identity : {};
+ const previousCv = isObject(previous.cv) ? previous.cv : {};
+ const identity: Body = { full_name: application.full_name, email: application.email, phone: application.phone, ...previousIdentity };
+ if ("full_name" in updates) identity.full_name = updates.full_name;
+ if ("email" in updates) identity.email = updates.email;
+ const cv: Body = { headline: application.cv_title ?? null, summary: application.cv_summary ?? null, skills: application.cv_skills ?? [], education: [], experiences: [], certifications: [], languages: [], portfolio_url: application.cv_portfolio_url ?? null, ...previousCv };
+ if ("cv_title" in updates) cv.headline = updates.cv_title;
+ if ("cv_summary" in updates) cv.summary = updates.cv_summary;
+ if ("cv_skills" in updates) cv.skills = updates.cv_skills;
+ if ("cv_portfolio_url" in updates) cv.portfolio_url = updates.cv_portfolio_url;
+ const education = Array.isArray(cv.education) ? [...cv.education] : [];
+ const educationKeys = Object.keys(EDUCATION_SNAPSHOT_MAP).filter((key) => key in updates);
+ if (educationKeys.length) { const first: Body = education.length && isObject(education[0]) ? { ...education[0] } : {}; for (const key of educationKeys) first[EDUCATION_SNAPSHOT_MAP[key]] = updates[key]; if (education.length) education[0] = first; else education.push(first); cv.education = education; }
+ const experiences = Array.isArray(cv.experiences) ? [...cv.experiences] : [];
+ const experienceKeys = Object.keys(EXPERIENCE_SNAPSHOT_MAP).filter((key) => key in updates);
+ if (experienceKeys.length) { const first: Body = experiences.length && isObject(experiences[0]) ? { ...experiences[0] } : {}; for (const key of experienceKeys) first[EXPERIENCE_SNAPSHOT_MAP[key]] = updates[key]; if (experiences.length) experiences[0] = first; else experiences.push(first); cv.experiences = experiences; }
+ return { version: 1, captured_at: previous.captured_at ?? application.created_at ?? new Date().toISOString(), updated_at: new Date().toISOString(), identity, cv };
+}
+
 function mapRpcError(message: string): { status: number; message: string } {
   if (/not found/i.test(message)) return { status: 404, message: "Lowongan atau lamaran tidak ditemukan." };
   if (/already exists|duplicate|unique constraint/i.test(message)) {
@@ -274,6 +297,7 @@ Deno.serve(async (req: Request) => {
       if (!isObject(body.data)) return jsonError(req, "data wajib berupa object.");
       const updates = validateApplication(body.data);
       if (Object.keys(updates).length === 0) return jsonError(req, "Tidak ada data yang diperbarui.");
+      updates.cv_snapshot = snapshotForDraftUpdate(application as unknown as Body, updates);
       const { data, error } = await db.from("bumn_lamar").update(updates)
         .eq("id", applicationId)
         .eq("user_id", user.id)
