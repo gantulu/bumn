@@ -77,8 +77,8 @@ function AppContent() {
       <Header isDetail={isDetailPage} onBack={goBackFromDetail} />
       <main className={"main-content " + (isDetailPage ? "detail-main" : "")}>
         <Routes>
-          <Route path="/" element={<HomePage jobs={jobs} savedIds={savedIds}
-            onSearchChange={(value) => { setSearch(value); navigate("/lowongan"); }}
+          <Route path="/" element={<HomePage jobs={jobs} savedIds={savedIds} searchQuery={search}
+            onSearchChange={setSearch}
             onSearchSubmit={openSearch} onSelectCategory={selectCategory}
             onToggleSaved={toggleSaved} onOpenJob={openJob} />} />
           <Route path="/lowongan" element={<SearchPage jobs={filteredJobs} query={search} category={category}
