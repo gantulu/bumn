@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { HashRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
@@ -226,14 +226,6 @@ function AppContent() {
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
   const applicationJob = jobs.find((job) => location.pathname === `/lamar/${job.id}`) ?? null;
-  useEffect(() => {
-    if (!selectedJob) return;
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedJob(null);
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [selectedJob]);
   const setActiveTab = (tab: Tab) => {
     const paths: Record<Tab, string> = {
       home: "/",
@@ -785,41 +777,30 @@ function AppContent() {
           place-items: center;
           margin: auto auto 12px;
         }
-        .detail-overlay {
-          position: absolute;
-          inset: 0;
-          z-index: 5;
-          background: #14233866;
-          display: flex;
-          align-items: end;
-        }
-        .detail-panel {
-          background: #f6f8fb;
-          width: 100%;
-          height: 90%;
-          max-height: 90%;
-          display: flex;
-          flex-direction: column;
-          overflow: hidden;
-          border-radius: 22px 22px 0 0;
-        }
-        .detail-header {
-          flex-shrink: 0;
+        .detail-page-header {
+          min-height: 62px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 20px;
+          gap: 12px;
+          padding: 10px 20px;
           background: white;
           border-bottom: 1px solid #edf0f4;
         }
-        .detail-header-spacer { width: 38px; height: 38px; }
-        .detail-content {
-          flex: 1;
-          min-height: 0;
-          overflow-y: auto;
-          padding: 20px;
-          overscroll-behavior: contain;
+        .detail-page-header strong { font-size: 15px; }
+        .detail-page-content {
+          padding: 22px 20px 28px;
         }
+        .detail-page-content .company-logo { width: 52px; height: 52px; }
+        .detail-page-content h2 { margin: 16px 0 7px; font-size: 22px; line-height: 1.3; }
+        .detail-page-content h3 { margin: 25px 0 9px; font-size: 15px; color: #253247; }
+        .detail-page-content p, .detail-page-content li {
+          color: #64748b;
+          font-size: 13px;
+          line-height: 1.75;
+        }
+        .detail-page-content ul { padding-left: 20px; }
+        .detail-main { background: #f6f8fb; }
         .bottom-action-bar {
           flex-shrink: 0;
           display: grid;
@@ -913,20 +894,61 @@ function AppContent() {
       `}</style>
 
       {/* HEADER */}
-      <header className="header">
-        <div className="brand">
-          <div className="brand-icon">
-            <BriefcaseBusiness size={21} />
+      {selectedJob ? (
+        <header className="detail-page-header">
+          <button
+            className="icon-button"
+            type="button"
+            aria-label="Kembali ke daftar lowongan"
+            onClick={() => navigate((location.state as { from?: string } | null)?.from ?? "/lowongan")}
+          >
+            <ArrowLeft size={21} />
+          </button>
+          <strong>Detail Lowongan</strong>
+          <button className="icon-button" type="button" aria-label="Bagikan lowongan" onClick={() => {
+            if (navigator.share) void navigator.share({ title: selectedJob.title, text: selectedJob.company, url: window.location.href });
+          }}>
+            <BriefcaseBusiness size={19} />
+          </button>
+        </header>
+      ) : (
+        <header className="header">
+          <div className="brand">
+            <div className="brand-icon">
+              <BriefcaseBusiness size={21} />
+            </div>
+            BUMN CAREER
           </div>
-          BUMN CAREER
-        </div>
-        <button className="icon-button" aria-label="Notifikasi">
-          <Bell size={21} />
-        </button>
-      </header>
+          <button className="icon-button" aria-label="Notifikasi">
+            <Bell size={21} />
+          </button>
+        </header>
+      )}
 
-      <main className="main-content">
-        {(isLoginPage || isRegisterPage) && (
+      <main className={`main-content ${selectedJob ? "detail-main" : ""}`}>
+        {selectedJob && (
+          <section className="detail-page-content">
+            <div className="company-logo">
+              <Building2 size={25} />
+            </div>
+            <h2>{selectedJob.title}</h2>
+            <strong>{selectedJob.company}</strong>
+            <p><MapPin size={14} style={{ display: "inline" }} /> {selectedJob.location}</p>
+            <div className="notice" role="note">
+              <CheckCircle2 size={15} style={{ display: "inline" }} /> Informasi contoh lowongan, bukan pengumuman resmi.
+            </div>
+            <h3>Deskripsi Pekerjaan</h3>
+            <p>{selectedJob.description}</p>
+            <h3>Kualifikasi</h3>
+            <ul>{selectedJob.qualifications.map((qualification) => <li key={qualification}>{qualification}</li>)}</ul>
+            <h3>Informasi Lowongan</h3>
+            <p>Jenis pekerjaan: {selectedJob.type}</p>
+            <p>Pendidikan: {selectedJob.education}</p>
+            <p>Estimasi gaji: {selectedJob.salary}</p>
+            <p><CalendarDays size={14} style={{ display: "inline" }} /> Batas pendaftaran: {selectedJob.deadline}</p>
+          </section>
+        )}
+        {!selectedJob && (isLoginPage || isRegisterPage) && (
           <section className="auth-card">
             <h2>{isLoginPage ? "Selamat Datang Kembali" : "Buat Akun BUMN Career"}</h2>
             <p>
@@ -1003,7 +1025,7 @@ function AppContent() {
           </section>
         )}
 
-        {!applicationJob && !isLoginPage && !isRegisterPage && activeTab === "home" && (
+        {!selectedJob && !applicationJob && !isLoginPage && !isRegisterPage && activeTab === "home" && (
           <>
             <section className="hero">
               <h1>Temukan Karier Impianmu!</h1>
@@ -1101,7 +1123,7 @@ function AppContent() {
           </>
         )}
 
-        {!isLoginPage && !isRegisterPage && activeTab === "search" && (
+        {!selectedJob && !isLoginPage && !isRegisterPage && activeTab === "search" && (
           <>
             <section className="page-header">
               <div>
@@ -1172,7 +1194,7 @@ function AppContent() {
           </>
         )}
 
-        {!isLoginPage && !isRegisterPage && activeTab === "saved" && (
+        {!selectedJob && !isLoginPage && !isRegisterPage && activeTab === "saved" && (
           <>
             <section className="page-header">
               <div>
@@ -1198,7 +1220,7 @@ function AppContent() {
           </>
         )}
 
-        {!isLoginPage && !isRegisterPage && activeTab === "profile" && (
+        {!selectedJob && !isLoginPage && !isRegisterPage && activeTab === "profile" && (
           <>
             <section className="page-header">
               <div>
@@ -1282,82 +1304,24 @@ function AppContent() {
         })}
       </nav>}
 
-      {/* JOB DETAIL */}
+      {/* DETAIL PAGE ACTIONS */}
       {selectedJob && (
-        <div
-          className="detail-overlay"
-          onClick={() => setSelectedJob(null)}
-        >
-          <div
-            className="detail-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Detail lowongan ${selectedJob.title}`}
-            onClick={(e) => e.stopPropagation()}
+        <div className="bottom-action-bar" aria-label="Aksi lowongan">
+          <button
+            type="button"
+            className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`}
+            aria-pressed={saved.includes(selectedJob.id)}
+            onClick={() => toggleSaved(selectedJob.id)}
           >
-            <div className="detail-header">
-              <button
-                className="icon-button"
-                onClick={() => setSelectedJob(null)}
-              >
-                <ArrowLeft size={21} />
-              </button>
-              <strong>Detail Lowongan</strong>
-              <span className="detail-header-spacer" aria-hidden="true" />
-            </div>
-
-            <div className="detail-content">
-              <div className="company-logo">
-                <Building2 size={25} />
-              </div>
-              <h2>{selectedJob.title}</h2>
-              <strong>{selectedJob.company}</strong>
-              <p>
-                <MapPin size={14} style={{ display: "inline" }} />{" "}
-                {selectedJob.location}
-              </p>
-              <div className="notice">
-                <CheckCircle2 size={15} style={{ display: "inline" }} />{" "}
-                Informasi contoh lowongan, bukan pengumuman resmi.
-              </div>
-
-              <h3>Deskripsi Pekerjaan</h3>
-              <p>{selectedJob.description}</p>
-
-              <h3>Kualifikasi</h3>
-              <ul>
-                {selectedJob.qualifications.map((q) => (
-                  <li key={q}>{q}</li>
-                ))}
-              </ul>
-
-              <h3>Informasi Lowongan</h3>
-              <p>Jenis pekerjaan: {selectedJob.type}</p>
-              <p>Pendidikan: {selectedJob.education}</p>
-              <p>Estimasi gaji: {selectedJob.salary}</p>
-              <p>
-                <CalendarDays size={14} style={{ display: "inline" }} />{" "}
-                Batas pendaftaran: {selectedJob.deadline}
-              </p>
-
-            </div>
-            <div className="bottom-action-bar">
-              <button
-                type="button"
-                className={`save-action ${saved.includes(selectedJob.id) ? "is-saved" : ""}`}
-                aria-pressed={saved.includes(selectedJob.id)}
-                onClick={() => toggleSaved(selectedJob.id)}
-              >
-                <Bookmark size={18} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
-                {saved.includes(selectedJob.id) ? "Tersimpan" : "Simpan"}
-              </button>
-              <button type="button" className="apply-button" onClick={() => startApplication(selectedJob)}>
-                Lamar Sekarang
-              </button>
-            </div>
-          </div>
+            <Bookmark size={18} fill={saved.includes(selectedJob.id) ? "currentColor" : "none"} />
+            {saved.includes(selectedJob.id) ? "Tersimpan" : "Simpan"}
+          </button>
+          <button type="button" className="apply-button" onClick={() => startApplication(selectedJob)}>
+            Lamar Sekarang
+          </button>
         </div>
       )}
+
     </div>
   );
 }
