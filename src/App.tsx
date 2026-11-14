@@ -233,7 +233,7 @@ function AppContent() {
     ? "search"
     : location.pathname === "/tersimpan"
       ? "saved"
-      : location.pathname === "/profil" || isLoginPage || isRegisterPage
+      : location.pathname === "/profil" || location.pathname === "/profile" || isLoginPage || isRegisterPage
         ? "profile"
         : "home";
   const selectedJob = jobs.find((job) => location.pathname === `/lowongan/${job.id}`) ?? null;
