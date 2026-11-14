@@ -104,3 +104,17 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* Improve contrast for secondary text on light surfaces. */
+.company-info span,
+.job-meta,
+.salary-label,
+.page-description,
+.detail-fact span,
+.empty-state,
+.nav-item,
+.profile-row,
+.result-count,
+.search-box {
+  color: #64748b;
+}
