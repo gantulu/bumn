@@ -37,6 +37,34 @@ function validEmail(value: string): boolean {
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
+const CV_TEXT_FIELDS: Record<string, number> = { cv_headline: 160, cv_summary: 3000, cv_portfolio_url: 2048, cv_linkedin_url: 2048, cv_website_url: 2048 };
+const CV_ARRAY_FIELDS = ["cv_skills", "cv_education", "cv_experiences", "cv_certifications", "cv_languages"] as const;
+const CV_ITEM_KEYS: Record<string, string[]> = { cv_education: ["level", "institution", "major", "degree", "start_year", "graduation_year", "gpa", "description"], cv_experiences: ["type", "company", "position", "employment_type", "location", "start_date", "end_date", "is_current", "description", "responsibilities"], cv_certifications: ["name", "issuer", "issue_date", "expiry_date", "credential_id", "credential_url", "description"], cv_languages: ["language", "proficiency"] };
+function validHttpUrl(value: string): boolean { try { const url = new URL(value); return (url.protocol === "https:" || url.protocol === "http:") && !!url.hostname; } catch { return false; } }
+function validateCvArray(key: string, value: unknown): unknown[] {
+ if (!Array.isArray(value)) throw new Error("Field " + key + " harus berupa array.");
+ const maxItems = key === "cv_skills" || key === "cv_certifications" ? 100 : 50;
+ if (value.length > maxItems) throw new Error("Field " + key + " melebihi batas jumlah item.");
+ if (key === "cv_skills") return value.map((item) => { if (typeof item !== "string" || !item.trim() || item.trim().length > 100) throw new Error("Setiap keahlian harus berupa teks 1–100 karakter."); return item.trim(); });
+ const allowed = CV_ITEM_KEYS[key] ?? [];
+ return value.map((item) => {
+  if (!item || typeof item !== "object" || Array.isArray(item)) throw new Error("Setiap item " + key + " harus berupa object.");
+  const record = item as Record<string, unknown>;
+  if (Object.keys(record).some((field) => !allowed.includes(field))) throw new Error("Terdapat properti item " + key + " yang tidak diizinkan.");
+  const clean: Record<string, unknown> = {};
+  for (const [field, fieldValue] of Object.entries(record)) {
+   if (field === "responsibilities") { if (!Array.isArray(fieldValue) || fieldValue.length > 30 || fieldValue.some((v) => typeof v !== "string" || v.trim().length > 500)) throw new Error("Responsibilities harus berupa array teks (maksimal 30 item)."); clean[field] = fieldValue.map((v) => (v as string).trim()).filter(Boolean); }
+   else if (field === "start_year" || field === "graduation_year") { if (fieldValue !== null && fieldValue !== "" && (typeof fieldValue !== "number" || !Number.isInteger(fieldValue) || fieldValue < 1900 || fieldValue > 2200)) throw new Error("Tahun pendidikan tidak valid."); clean[field] = fieldValue === "" ? null : fieldValue; }
+   else if (field === "gpa") { if (fieldValue !== null && fieldValue !== "" && (typeof fieldValue !== "number" || !Number.isFinite(fieldValue) || fieldValue < 0 || fieldValue > 4)) throw new Error("IPK harus bernilai 0 sampai 4."); clean[field] = fieldValue === "" ? null : fieldValue; }
+   else if (field === "is_current") { if (typeof fieldValue !== "boolean") throw new Error("Status pengalaman tidak valid."); clean[field] = fieldValue; }
+   else { if (fieldValue !== null && typeof fieldValue !== "string") throw new Error("Field " + field + " harus berupa teks."); const textValue = typeof fieldValue === "string" ? fieldValue.trim() : ""; if (textValue.length > 3000) throw new Error("Field " + field + " melebihi batas karakter."); if (field === "credential_url" && textValue && !validHttpUrl(textValue)) throw new Error("URL kredensial tidak valid."); clean[field] = textValue || null; }
+  }
+  if (clean.start_year && clean.graduation_year && Number(clean.graduation_year) < Number(clean.start_year)) throw new Error("Tahun kelulusan tidak boleh lebih awal dari tahun mulai.");
+  if (clean.is_current === true && clean.end_date) throw new Error("Pengalaman aktif tidak boleh memiliki tanggal selesai.");
+  if (clean.start_date && clean.end_date && String(clean.end_date) < String(clean.start_date)) throw new Error("Tanggal selesai pengalaman tidak boleh lebih awal dari tanggal mulai.");
+  return clean;
+ });
+}
 function getOwnedAvatarPath(avatarUrl: unknown, userId: string, supabaseUrl: string): string | null {
   if (typeof avatarUrl !== "string" || !avatarUrl) return null;
   try {
@@ -242,6 +270,7 @@ Deno.serve(async (req: Request) => {
       const allowed = [
         "full_name", "email", "birth_place", "birth_date", "gender",
         "address", "city", "province", "postal_code",
+        ...Object.keys(CV_TEXT_FIELDS), ...CV_ARRAY_FIELDS,
       ];
       if (Object.keys(input).some((key) => !allowed.includes(key))) {
         return badRequest(req, "Terdapat field profil yang tidak diizinkan.");
@@ -289,10 +318,21 @@ Deno.serve(async (req: Request) => {
         if (normalized.length > max) return badRequest(req, `Field ${key} melebihi batas karakter.`);
         updates[key] = normalized || null;
       }
+      for (const [key, max] of Object.entries(CV_TEXT_FIELDS)) {
+        if (!(key in input)) continue;
+        const value = input[key];
+        if (value !== null && value !== undefined && typeof value !== "string") return badRequest(req, "Field " + key + " harus berupa teks.");
+        const normalized = typeof value === "string" ? value.trim() : "";
+        if (normalized.length > max) return badRequest(req, "Field " + key + " melebihi batas karakter.");
+        if (["cv_portfolio_url", "cv_linkedin_url", "cv_website_url"].includes(key) && normalized && !validHttpUrl(normalized)) return badRequest(req, "URL " + key + " tidak valid.");
+        updates[key] = normalized || null;
+      }
+      for (const key of CV_ARRAY_FIELDS) if (key in input) updates[key] = validateCvArray(key, input[key]);
+      if (Object.keys(input).some((key) => CV_TEXT_FIELDS[key] !== undefined || CV_ARRAY_FIELDS.includes(key as typeof CV_ARRAY_FIELDS[number]))) updates.cv_updated_at = new Date().toISOString();
 
       const { data, error } = await db.from("bumn_users").update(updates)
         .eq("id", user.id)
-        .select("id,full_name,phone,email,avatar,is_active,birth_place,birth_date,gender,address,city,province,postal_code,created_at,updated_at")
+        .select("id,full_name,phone,email,avatar,is_active,birth_place,birth_date,gender,address,city,province,postal_code,cv_headline,cv_summary,cv_skills,cv_education,cv_experiences,cv_certifications,cv_languages,cv_portfolio_url,cv_linkedin_url,cv_website_url,cv_updated_at,created_at,updated_at")
         .single();
       if (error) {
         if (error.code === "23505") return badRequest(req, "Email sudah digunakan akun lain.", 409);
